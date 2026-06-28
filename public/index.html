@@ -248,6 +248,220 @@ body{font-family:system-ui,sans-serif;background:#0f172a;color:#e2e8f0;height:10
 </div>
 
 <!-- ══ TOPBAR ══ -->
+<div class="topba.admin-close-btn:hover{background:#475569}
+.admin-body{padding:20px}
+.asection{background:#1e293b;border-radius:10px;padding:16px;margin-bottom:14px}
+.asection-title{font-size:12px;font-weight:700;color:#f1f5f9;margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.aform{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:8px;align-items:end}
+.afield{display:flex;flex-direction:column;gap:4px}
+.afield label{font-size:10px;color:#94a3b8;font-weight:600}
+.afield input{padding:7px 10px;border-radius:6px;background:#0f172a;border:1px solid #334155;color:#f1f5f9;font-size:11px;outline:none}
+.afield input:focus{border-color:#2563eb}
+.areg-btn{padding:7px 14px;border-radius:6px;background:#2563eb;color:#fff;font-size:11px;font-weight:700;border:none;cursor:pointer;white-space:nowrap}
+.areg-btn:hover{background:#1d4ed8}
+.amsg{font-size:11px;margin-top:6px;display:none}
+/* Summary */
+.asum{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+.asum-card{background:#1e293b;border-radius:8px;padding:10px;text-align:center}
+.asum-num{font-size:24px;font-weight:800}
+.asum-lbl{font-size:10px;color:#64748b;font-weight:600;text-transform:uppercase}
+/* Table */
+.atable{width:100%;border-collapse:collapse}
+.atable th{font-size:10px;font-weight:700;color:#64748b;text-align:left;padding:7px 10px;border-bottom:1px solid #334155;text-transform:uppercase}
+.atable td{font-size:11px;color:#e2e8f0;padding:9px 10px;border-bottom:1px solid #1e293b;vertical-align:middle}
+.atable tr:hover td{background:rgba(255,255,255,.02)}
+.bnum{font-weight:700;color:#60a5fa;font-family:monospace}
+.abadge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;cursor:pointer}
+.abadge-on{background:#052e16;color:#4ade80}
+.abadge-off{background:#1e293b;color:#64748b}
+.adel{background:#450a0a;color:#f87171;border:none;border-radius:5px;padding:3px 10px;font-size:10px;cursor:pointer;font-weight:600}
+.adel:hover{background:#7f1d1d}
+
+/* ══ TOPBAR ══ */
+.topbar{background:#0f172a;border-bottom:1px solid #1e293b;padding:0 16px;height:48px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.brand{font-size:14px;font-weight:700;color:#f1f5f9;display:flex;align-items:center;gap:8px}
+.topbar-right{display:flex;align-items:center;gap:8px}
+.live-pill{background:#16a34a;color:#fff;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;display:flex;align-items:center;gap:4px}
+.ldot{width:6px;height:6px;border-radius:50%;background:#fff;animation:blink 1.5s infinite}
+.conn-pill{display:flex;align-items:center;gap:5px;background:#1e293b;padding:3px 10px;border-radius:20px;font-size:11px}
+.cdot{width:7px;height:7px;border-radius:50%;background:#ef4444}
+.cdot.ok{background:#22c55e;animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* ══ ALERT BANNER ══ */
+.alert-banner{display:none;flex-shrink:0;background:#7f1d1d;border-bottom:2px solid #ef4444;padding:6px 16px;flex-direction:row;align-items:center;gap:12px;animation:bflash .6s infinite alternate}
+.alert-banner.active{display:flex}
+@keyframes bflash{0%{background:#7f1d1d}100%{background:#450a0a}}
+.bicon{font-size:20px;animation:shake .3s infinite alternate}
+@keyframes shake{0%{transform:rotate(-8deg)}100%{transform:rotate(8deg)}}
+.btext{flex:1}
+.btitle{font-size:13px;font-weight:800;color:#fca5a5}
+.bsub{font-size:11px;color:#fecaca;margin-top:2px;line-height:1.5}
+.bclose{background:#ef4444;color:#fff;border:none;padding:4px 12px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;flex-shrink:0}
+.bled{width:12px;height:12px;border-radius:50%;background:#fff;flex-shrink:0;animation:ledp .4s infinite alternate;box-shadow:0 0 8px #fff}
+@keyframes ledp{0%{box-shadow:0 0 4px #fff}100%{box-shadow:0 0 16px #fff}}
+
+/* ══ LED BAR ══ */
+.led-bar{background:#0a0f1e;border-bottom:1px solid #1e293b;padding:5px 16px;display:flex;align-items:center;gap:14px;flex-shrink:0;height:34px}
+.led-item{display:flex;align-items:center;gap:6px}
+.led{width:16px;height:16px;border-radius:50%;flex-shrink:0;transition:all .3s}
+.led-off{background:#1e293b}
+.led-green{background:#22c55e;box-shadow:0 0 8px #22c55e}
+.led-amber{background:#f59e0b;box-shadow:0 0 8px #f59e0b;animation:bl 1s infinite}
+.led-red{background:#ef4444;box-shadow:0 0 10px #ef4444;animation:bl .4s infinite}
+@keyframes bl{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.2;transform:scale(.7)}}
+.llbl{font-size:10px;font-weight:700;color:#475569}
+.llbl.s{color:#4ade80}.llbl.w{color:#fbbf24}.llbl.d{color:#f87171}
+.ldiv{width:1px;height:18px;background:#1e293b}
+.bzrw{display:flex;align-items:center;gap:6px;margin-left:auto}
+.bzrl{font-size:10px;color:#64748b}
+.bzrb{background:#1e293b;border:1px solid #334155;color:#64748b;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer}
+.bzrb.on{background:#16a34a;border-color:#16a34a;color:#fff}
+.stxt{font-size:10px;color:#475569}
+
+/* ══ STATS BAR ══ */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:#1e293b;flex-shrink:0}
+.stat{background:#0f172a;padding:7px 14px;position:relative}
+.stat-label{font-size:10px;color:#64748b;font-weight:600;text-transform:uppercase}
+.stat-val{font-size:20px;font-weight:700;margin-top:1px}
+.c-blue{color:#60a5fa}.c-green{color:#4ade80}.c-red{color:#f87171}.c-amber{color:#fbbf24}
+/* Admin button inside stats */
+.admin-login-btn{
+  position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:#0f172a;cursor:pointer;border:none;width:100%;transition:.2s;
+}
+.admin-login-btn:hover{background:#1e293b}
+.admin-login-btn .abl{font-size:18px;margin-bottom:2px}
+.admin-login-btn .abt{font-size:10px;font-weight:700;color:#60a5fa}
+.admin-login-btn .abs{font-size:9px;color:#475569;margin-top:1px}
+.admin-logged-btn{
+  position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:#052e16;cursor:pointer;border:none;width:100%;transition:.2s;
+}
+.admin-logged-btn:hover{background:#064e3b}
+.admin-logged-btn .abl{font-size:16px;margin-bottom:2px}
+.admin-logged-btn .abt{font-size:10px;font-weight:700;color:#4ade80}
+.admin-logged-btn .abs{font-size:9px;color:#6ee7b7;margin-top:1px}
+
+/* ══ MAIN LAYOUT ══ */
+.main-layout{flex:1;display:grid;grid-template-columns:1fr 270px;overflow:hidden}
+#map{height:100%}
+.sidebar{background:#0f172a;border-left:1px solid #1e293b;display:flex;flex-direction:column;overflow:hidden}
+.sb-head{padding:7px 12px;border-bottom:1px solid #1e293b;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.sb-head h3{font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em}
+.badge{font-size:10px;font-weight:700;padding:2px 6px;border-radius:20px}
+.br{background:#450a0a;color:#f87171}.bg{background:#052e16;color:#4ade80}
+#alerts-list{overflow-y:auto;max-height:200px;flex-shrink:0}
+.alert-row{padding:6px 12px;border-bottom:1px solid #1e293b;display:flex;gap:7px}
+.ai{width:22px;height:22px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0}
+.ai-r{background:#450a0a}.ai-a{background:#451a03}.ai-g{background:#052e16}
+.at{font-size:11px;font-weight:600;color:#e2e8f0}
+.as{font-size:10px;color:#64748b;margin-top:1px}
+#boats-monitor{overflow-y:auto;flex:1}
+.boat-row{padding:8px 12px;border-bottom:1px solid #1e293b;display:flex;align-items:center;gap:8px;cursor:pointer}
+.boat-row:hover{background:#1e293b}
+.bdot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.bs{background:#22c55e}.bw{background:#f59e0b;animation:blink .8s infinite}.bv{background:#ef4444;animation:blink .4s infinite}
+.bi{flex:1}
+.bid{font-size:12px;font-weight:700;color:#f1f5f9}
+.bcoord{font-size:10px;color:#64748b;font-family:monospace}
+.bstat{font-size:10px;font-weight:700;padding:2px 6px;border-radius:20px}
+.bss{background:#052e16;color:#4ade80}.bsw{background:#451a03;color:#fbbf24}.bsv{background:#450a0a;color:#f87171}
+.no-data{padding:14px;text-align:center;color:#475569;font-size:11px}
+.pbar{background:#0f172a;border-top:1px solid #1e293b;padding:4px 12px;font-size:10px;color:#475569;display:flex;justify-content:space-between;flex-shrink:0}
+.gps-btn-map{position:absolute;bottom:20px;right:10px;z-index:1000;background:#2563eb;color:#fff;border:none;border-radius:8px;padding:7px 12px;font-size:11px;font-weight:600;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.4)}
+.my-loc{width:14px;height:14px;border-radius:50%;background:#2563eb;border:3px solid #fff;box-shadow:0 0 0 3px rgba(37,99,235,.4)}
+</style>
+</head>
+<body>
+
+<!-- ══ LOGIN MODAL ══ -->
+<div class="modal-bg" id="login-modal">
+  <div class="modal" style="position:relative">
+    <button class="mclose" onclick="closeLogin()">✕</button>
+    <div style="text-align:center;font-size:36px;margin-bottom:8px">🔐</div>
+    <div class="modal-title">Ingia kama Admin</div>
+    <div class="modal-sub">Udhibiti wa Mfumo wa Uvuvi</div>
+    <div class="mfield">
+      <label>JINA LA MTUMIAJI</label>
+      <input type="text" id="lu" placeholder="admin" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <div class="mfield">
+      <label>NENO LA SIRI</label>
+      <input type="password" id="lp" placeholder="••••••" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <button class="mlogin-btn" onclick="doLogin()">🔐 INGIA</button>
+    <div class="merror" id="lerr">❌ Jina au neno la siri si sahihi!</div>
+  </div>
+</div>
+
+<!-- ══ ADMIN PANEL MODAL ══ -->
+<div class="admin-modal" id="admin-modal">
+  <div class="admin-panel">
+    <div class="admin-header">
+      <div class="admin-title">⚙️ Admin Panel — Usajili wa Boti</div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <span style="font-size:11px;color:#4ade80">✅ Umeingia kama: <b id="admin-user-lbl">—</b></span>
+        <button class="admin-close-btn" onclick="doLogout()">🚪 Toka</button>
+        <button class="admin-close-btn" onclick="closeAdminPanel()">✕ Funga</button>
+      </div>
+    </div>
+    <div class="admin-body">
+
+      <!-- Summary -->
+      <div class="asum">
+        <div class="asum-card"><div class="asum-num c-blue" id="tot-boats">0</div><div class="asum-lbl">Boti Zote</div></div>
+        <div class="asum-card"><div class="asum-num c-green" id="act-boats">0</div><div class="asum-lbl">Zinafanya Kazi</div></div>
+        <div class="asum-card"><div class="asum-num" style="color:#64748b" id="ina-boats">0</div><div class="asum-lbl">Zimesimamishwa</div></div>
+      </div>
+
+      <!-- Register Form -->
+      <div class="asection">
+        <div class="asection-title">➕ Sajili Boti Mpya</div>
+        <div class="aform">
+          <div class="afield"><label>NAMBARI YA BOTI</label><input type="text" id="b-id" placeholder="BOAT-001" style="text-transform:uppercase"></div>
+          <div class="afield"><label>JINA LA BOTI</label><input type="text" id="b-name" placeholder="Samaki Mkuu"></div>
+          <div class="afield"><label>MMILIKI</label><input type="text" id="b-owner" placeholder="Jina la mmiliki"></div>
+          <button class="areg-btn" onclick="registerBoat()">➕ Sajili</button>
+        </div>
+        <div class="amsg" id="amsg"></div>
+      </div>
+
+      <!-- Boats Table -->
+      <div class="asection">
+        <div class="asection-title">🚤 Boti Zilizosajiliwa</div>
+        <div style="overflow-x:auto">
+          <table class="atable">
+            <thead>
+              <tr>
+                <th>#</th><th>Nambari</th><th>Jina</th><th>Mmiliki</th><th>Tarehe</th><th>GPS</th><th>Hali</th><th>Futa</th>
+              </tr>
+            </thead>
+            <tbody id="boats-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Violation Report (PDF) -->
+      <div class="asection">
+        <div class="asection-title">📄 Ripoti ya Ukiukaji (PDF)</div>
+        <div class="aform" style="grid-template-columns:1fr 1fr 1fr auto">
+          <div class="afield"><label>TANGU TAREHE</label><input type="date" id="rep-from"></div>
+          <div class="afield"><label>HADI TAREHE</label><input type="date" id="rep-to"></div>
+          <div class="afield"><label>BOTI (HIARI)</label><input type="text" id="rep-boat" placeholder="BOAT-001 au wazi=zote" style="text-transform:uppercase"></div>
+          <button class="areg-btn" onclick="downloadViolationPDF()">📥 Pakua PDF</button>
+        </div>
+        <div class="amsg" id="rep-msg"></div>
+        <div style="font-size:10px;color:#64748b;margin-top:8px">
+          Jumla ya matukio ya ukiukaji yaliyorekodiwa: <b id="viol-total-count" style="color:#f87171">0</b>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ══ TOPBAR ══ -->
 <div class="topbar">
   <div class="brand">⚓ Mfumo wa Udhibiti wa Uvuvi — Geofencing</div>
   <div class="topbar-right">
