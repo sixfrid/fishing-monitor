@@ -218,7 +218,7 @@ body{font-family:system-ui,sans-serif;background:#0f172a;color:#e2e8f0;height:10
           <table class="atable">
             <thead>
               <tr>
-                <th>#</th><th>Nambari</th><th>Jina</th><th>Mmiliki</th><th>Tarehe</th><th>Hali</th><th>Futa</th>
+                <th>#</th><th>Nambari</th><th>Jina</th><th>Mmiliki</th><th>Tarehe</th><th>GPS</th><th>Hali</th><th>Futa</th>
               </tr>
             </thead>
             <tbody id="boats-tbody"></tbody>
@@ -304,6 +304,25 @@ body{font-family:system-ui,sans-serif;background:#0f172a;color:#e2e8f0;height:10
 
 <script>
 // ══════════════════════════════════════
+// DEFAULT ZONES (Maeneo Yaliyokatazwa)
+// Eneo A linajumuisha coordinate ya mfano: -8.933905, 33.420692
+// ══════════════════════════════════════
+function ensureDefaultZones(){
+  const existing=localStorage.getItem('gz');
+  if(existing && JSON.parse(existing).length>0) return; // tayari kuna zones, usiandike upya
+  const defaultZones=[
+    {name:'Eneo A - Lililokatazwa',
+      latMin:-8.93550,latMax:-8.93250,
+      lonMin:33.41850,lonMax:33.42300},
+    {name:'Eneo B - Lililokatazwa',
+      latMin:-8.94100,latMax:-8.93800,
+      lonMin:33.42100,lonMax:33.42550}
+  ];
+  localStorage.setItem('gz',JSON.stringify(defaultZones));
+}
+ensureDefaultZones();
+
+// ══════════════════════════════════════
 // AUTH
 // ══════════════════════════════════════
 const USERS={'admin':'admin123','msimamizi':'uvuvi2024'};
@@ -363,6 +382,10 @@ if(currentAdmin&&USERS[currentAdmin]) setAdminUI(true);
 function getBoats(){try{return JSON.parse(localStorage.getItem('reg_boats')||'[]');}catch(e){return[];}}
 function saveBoats(b){localStorage.setItem('reg_boats',JSON.stringify(b));}
 
+// Boti zilizo 'live' kwa sasa (zinatuma GPS), zinasasishwa na poll()
+const liveBoatIds=new Set();
+const ONLINE_TIMEOUT_MS=15000; // boti inahesabiwa 'offline' kama haijatuma data >15s
+
 function registerBoat(){
   const id=document.getElementById('b-id').value.trim().toUpperCase();
   const name=document.getElementById('b-name').value.trim();
@@ -378,7 +401,8 @@ function registerBoat(){
   document.getElementById('b-id').value='';
   document.getElementById('b-name').value='';
   document.getElementById('b-owner').value='';
-  showMsg(msg,`✅ Boti ${id} — ${name} imesajiliwa!`,'#4ade80');
+  const onlineNote=liveBoatIds.has(id)?' (Tayari imeunganishwa ✅)':' (Bado haijaunganishwa kwenye GPS ❌)';
+  showMsg(msg,`✅ Boti ${id} — ${name} imesajiliwa!${onlineNote}`,'#4ade80');
   renderBoatsTable();updateAdminBoatCount();
 }
 
@@ -403,20 +427,24 @@ function renderBoatsTable(){
   const boats=getBoats();
   const tbody=document.getElementById('boats-tbody');
   if(!boats.length){
-    tbody.innerHTML='<tr><td colspan="7" style="text-align:center;color:#475569;padding:16px">Hakuna boti zilizosajiliwa</td></tr>';
+    tbody.innerHTML='<tr><td colspan="8" style="text-align:center;color:#475569;padding:16px">Hakuna boti zilizosajiliwa</td></tr>';
     return;
   }
-  tbody.innerHTML=boats.map((b,i)=>`
+  tbody.innerHTML=boats.map((b,i)=>{
+    const online=liveBoatIds.has(b.id);
+    return `
     <tr>
       <td style="color:#475569">${i+1}</td>
       <td><span class="bnum">${b.id}</span></td>
       <td>${b.name}</td>
       <td style="color:#94a3b8">${b.owner}</td>
       <td style="color:#64748b;font-size:10px">${b.date}</td>
+      <td><span class="abadge ${online?'abadge-on':'abadge-off'}">
+        ${online?'🟢 Online':'⚪ Offline'}</span></td>
       <td><span class="abadge ${b.active?'abadge-on':'abadge-off'}" onclick="toggleActive('${b.id}')">
         ${b.active?'✅ Hai':'⏸ Simamisha'}</span></td>
       <td><button class="adel" onclick="deleteBoat('${b.id}')">🗑 Futa</button></td>
-    </tr>`).join('');
+    </tr>`;}).join('');
 }
 
 // ══════════════════════════════════════
@@ -558,7 +586,10 @@ function updateBoat(b){
   else if(chk.s==='warning'&&b.status==='safe'){b.status='warning';b.zone=chk.z;}
   const info=getBoatInfo(b.id);
   b.name=info?info.name:'';
+  b.registered=!!info;
+  b.lastSeen=Date.now();
   boatsData[b.id]=b;
+  liveBoatIds.add(b.id); // boti hii inatuma GPS sasa hivi -> 'online'
 
   if(markers[b.id]){markers[b.id].setLatLng([b.lat,b.lon]);markers[b.id].setIcon(boatIcon(b.status));}
   else{
@@ -607,19 +638,32 @@ function pushAlert(a){
     </div>`).join('');
 }
 
+// Angalia boti zilizopoteza connection (hazijatuma GPS kwa muda mrefu)
+function checkOfflineBoats(){
+  const now=Date.now();
+  for(const id of [...liveBoatIds]){
+    const b=boatsData[id];
+    if(b && (now-b.lastSeen)>ONLINE_TIMEOUT_MS){
+      liveBoatIds.delete(id);
+    }
+  }
+}
+
 function renderMonitor(){
+  checkOfflineBoats();
   const all=Object.values(boatsData);
   document.getElementById('s-safe').textContent=all.filter(b=>b.status==='safe').length;
   document.getElementById('s-viol').textContent=all.filter(b=>b.status==='violation').length;
   document.getElementById('s-warn').textContent=all.filter(b=>b.status==='warning').length;
   document.getElementById('bbadge').textContent=all.length;
   document.getElementById('lu-time').textContent='Mwisho: '+new Date().toLocaleTimeString();
-  document.getElementById('online-c').textContent='Online: '+all.length;
+  document.getElementById('online-c').textContent='Online: '+liveBoatIds.size;
   document.getElementById('boats-monitor').innerHTML=all.length?all.map(b=>`
     <div class="boat-row" onclick="focusBoat('${b.id}')">
       <div class="bdot ${b.status==='safe'?'bs':b.status==='warning'?'bw':'bv'}"></div>
       <div class="bi">
-        <div class="bid">${b.id}${b.name?` <span style="color:#64748b;font-size:10px;font-weight:400">${b.name}</span>`:''}</div>
+        <div class="bid">${b.id}${b.name?` <span style="color:#64748b;font-size:10px;font-weight:400">${b.name}</span>`:''}
+          ${!b.registered?' <span style="color:#fbbf24;font-size:9px;font-weight:700">⚠️ Haijasajiliwa</span>':''}</div>
         <div class="bcoord">${b.lat.toFixed(5)}, ${b.lon.toFixed(5)}</div>
       </div>
       <span class="bstat ${b.status==='safe'?'bss':b.status==='warning'?'bsw':'bsv'}">
@@ -646,6 +690,10 @@ async function poll(){
   }catch(e){
     document.getElementById('cdot').classList.remove('ok');
     document.getElementById('clabel').textContent='Inaunganika...';
+  }
+  // Sasisha admin table kama panel ipo wazi (kuonyesha online/offline live)
+  if(document.getElementById('admin-modal').classList.contains('active')){
+    renderBoatsTable();updateAdminBoatCount();
   }
 }
 
