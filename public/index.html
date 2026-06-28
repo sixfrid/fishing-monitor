@@ -9,178 +9,638 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:system-ui,sans-serif;background:#0f172a;color:#e2e8f0;height:100vh;display:flex;flex-direction:column;overflow:hidden}
-.topbar{background:#0f172a;border-bottom:1px solid #1e293b;padding:0 16px;height:50px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
-.brand{font-size:15px;font-weight:700;color:#f1f5f9;display:flex;align-items:center;gap:8px}
-.topbar-right{display:flex;align-items:center;gap:10px}
-.live-pill{background:#16a34a;color:#fff;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:5px}
+
+/* ══ ADMIN MODAL ══ */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9000;display:none;align-items:center;justify-content:center}
+.modal-bg.active{display:flex}
+.modal{background:#1e293b;border:1px solid #334155;border-radius:14px;padding:32px;width:340px}
+.modal-title{font-size:16px;font-weight:800;color:#f1f5f9;margin-bottom:4px;text-align:center}
+.modal-sub{font-size:11px;color:#64748b;text-align:center;margin-bottom:20px}
+.mfield{margin-bottom:12px}
+.mfield label{font-size:11px;color:#94a3b8;font-weight:600;display:block;margin-bottom:4px}
+.mfield input{width:100%;padding:9px 12px;border-radius:7px;background:#0f172a;border:1px solid #334155;color:#f1f5f9;font-size:12px;outline:none}
+.mfield input:focus{border-color:#2563eb}
+.mlogin-btn{width:100%;padding:10px;border-radius:7px;background:#2563eb;color:#fff;font-size:13px;font-weight:700;border:none;cursor:pointer;margin-top:4px}
+.mlogin-btn:hover{background:#1d4ed8}
+.merror{color:#f87171;font-size:11px;text-align:center;margin-top:8px;display:none}
+.mclose{position:absolute;top:12px;right:14px;background:none;border:none;color:#64748b;font-size:18px;cursor:pointer}
+
+/* ══ ADMIN PANEL MODAL ══ */
+.admin-modal{position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:9100;display:none;align-items:flex-start;justify-content:center;padding-top:40px;overflow-y:auto}
+.admin-modal.active{display:flex}
+.admin-panel{background:#0f172a;border:1px solid #334155;border-radius:14px;width:700px;max-width:95vw;margin-bottom:40px}
+.admin-header{background:#1e293b;padding:14px 20px;border-radius:14px 14px 0 0;display:flex;align-items:center;justify-content:space-between}
+.admin-title{font-size:14px;font-weight:800;color:#f1f5f9}
+.admin-close-btn{background:#334155;border:none;color:#94a3b8;padding:4px 12px;border-radius:6px;cursor:pointer;font-size:12px}
+.admin-close-btn:hover{background:#475569}
+.admin-body{padding:20px}
+.asection{background:#1e293b;border-radius:10px;padding:16px;margin-bottom:14px}
+.asection-title{font-size:12px;font-weight:700;color:#f1f5f9;margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.aform{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:8px;align-items:end}
+.afield{display:flex;flex-direction:column;gap:4px}
+.afield label{font-size:10px;color:#94a3b8;font-weight:600}
+.afield input{padding:7px 10px;border-radius:6px;background:#0f172a;border:1px solid #334155;color:#f1f5f9;font-size:11px;outline:none}
+.afield input:focus{border-color:#2563eb}
+.areg-btn{padding:7px 14px;border-radius:6px;background:#2563eb;color:#fff;font-size:11px;font-weight:700;border:none;cursor:pointer;white-space:nowrap}
+.areg-btn:hover{background:#1d4ed8}
+.amsg{font-size:11px;margin-top:6px;display:none}
+/* Summary */
+.asum{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+.asum-card{background:#1e293b;border-radius:8px;padding:10px;text-align:center}
+.asum-num{font-size:24px;font-weight:800}
+.asum-lbl{font-size:10px;color:#64748b;font-weight:600;text-transform:uppercase}
+/* Table */
+.atable{width:100%;border-collapse:collapse}
+.atable th{font-size:10px;font-weight:700;color:#64748b;text-align:left;padding:7px 10px;border-bottom:1px solid #334155;text-transform:uppercase}
+.atable td{font-size:11px;color:#e2e8f0;padding:9px 10px;border-bottom:1px solid #1e293b;vertical-align:middle}
+.atable tr:hover td{background:rgba(255,255,255,.02)}
+.bnum{font-weight:700;color:#60a5fa;font-family:monospace}
+.abadge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;cursor:pointer}
+.abadge-on{background:#052e16;color:#4ade80}
+.abadge-off{background:#1e293b;color:#64748b}
+.adel{background:#450a0a;color:#f87171;border:none;border-radius:5px;padding:3px 10px;font-size:10px;cursor:pointer;font-weight:600}
+.adel:hover{background:#7f1d1d}
+
+/* ══ TOPBAR ══ */
+.topbar{background:#0f172a;border-bottom:1px solid #1e293b;padding:0 16px;height:48px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.brand{font-size:14px;font-weight:700;color:#f1f5f9;display:flex;align-items:center;gap:8px}
+.topbar-right{display:flex;align-items:center;gap:8px}
+.live-pill{background:#16a34a;color:#fff;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;display:flex;align-items:center;gap:4px}
 .ldot{width:6px;height:6px;border-radius:50%;background:#fff;animation:blink 1.5s infinite}
-.conn-pill{display:flex;align-items:center;gap:6px;background:#1e293b;padding:4px 12px;border-radius:20px;font-size:12px}
+.conn-pill{display:flex;align-items:center;gap:5px;background:#1e293b;padding:3px 10px;border-radius:20px;font-size:11px}
 .cdot{width:7px;height:7px;border-radius:50%;background:#ef4444}
 .cdot.ok{background:#22c55e;animation:blink 2s infinite}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* ══ ALERT BANNER ══ */
+.alert-banner{display:none;flex-shrink:0;background:#7f1d1d;border-bottom:2px solid #ef4444;padding:6px 16px;flex-direction:row;align-items:center;gap:12px;animation:bflash .6s infinite alternate}
+.alert-banner.active{display:flex}
+@keyframes bflash{0%{background:#7f1d1d}100%{background:#450a0a}}
+.bicon{font-size:20px;animation:shake .3s infinite alternate}
+@keyframes shake{0%{transform:rotate(-8deg)}100%{transform:rotate(8deg)}}
+.btext{flex:1}
+.btitle{font-size:13px;font-weight:800;color:#fca5a5}
+.bsub{font-size:11px;color:#fecaca;margin-top:2px;line-height:1.5}
+.bclose{background:#ef4444;color:#fff;border:none;padding:4px 12px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;flex-shrink:0}
+.bled{width:12px;height:12px;border-radius:50%;background:#fff;flex-shrink:0;animation:ledp .4s infinite alternate;box-shadow:0 0 8px #fff}
+@keyframes ledp{0%{box-shadow:0 0 4px #fff}100%{box-shadow:0 0 16px #fff}}
+
+/* ══ LED BAR ══ */
+.led-bar{background:#0a0f1e;border-bottom:1px solid #1e293b;padding:5px 16px;display:flex;align-items:center;gap:14px;flex-shrink:0;height:34px}
+.led-item{display:flex;align-items:center;gap:6px}
+.led{width:16px;height:16px;border-radius:50%;flex-shrink:0;transition:all .3s}
+.led-off{background:#1e293b}
+.led-green{background:#22c55e;box-shadow:0 0 8px #22c55e}
+.led-amber{background:#f59e0b;box-shadow:0 0 8px #f59e0b;animation:bl 1s infinite}
+.led-red{background:#ef4444;box-shadow:0 0 10px #ef4444;animation:bl .4s infinite}
+@keyframes bl{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.2;transform:scale(.7)}}
+.llbl{font-size:10px;font-weight:700;color:#475569}
+.llbl.s{color:#4ade80}.llbl.w{color:#fbbf24}.llbl.d{color:#f87171}
+.ldiv{width:1px;height:18px;background:#1e293b}
+.bzrw{display:flex;align-items:center;gap:6px;margin-left:auto}
+.bzrl{font-size:10px;color:#64748b}
+.bzrb{background:#1e293b;border:1px solid #334155;color:#64748b;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer}
+.bzrb.on{background:#16a34a;border-color:#16a34a;color:#fff}
+.stxt{font-size:10px;color:#475569}
+
+/* ══ STATS BAR ══ */
 .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:#1e293b;flex-shrink:0}
-.stat{background:#0f172a;padding:10px 16px}
-.stat-label{font-size:10px;color:#64748b;font-weight:600;text-transform:uppercase;letter-spacing:.05em}
-.stat-val{font-size:24px;font-weight:700;margin-top:2px}
+.stat{background:#0f172a;padding:7px 14px;position:relative}
+.stat-label{font-size:10px;color:#64748b;font-weight:600;text-transform:uppercase}
+.stat-val{font-size:20px;font-weight:700;margin-top:1px}
 .c-blue{color:#60a5fa}.c-green{color:#4ade80}.c-red{color:#f87171}.c-amber{color:#fbbf24}
-.main{flex:1;display:grid;grid-template-columns:1fr 300px;overflow:hidden}
+/* Admin button inside stats */
+.admin-login-btn{
+  position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:#0f172a;cursor:pointer;border:none;width:100%;transition:.2s;
+}
+.admin-login-btn:hover{background:#1e293b}
+.admin-login-btn .abl{font-size:18px;margin-bottom:2px}
+.admin-login-btn .abt{font-size:10px;font-weight:700;color:#60a5fa}
+.admin-login-btn .abs{font-size:9px;color:#475569;margin-top:1px}
+.admin-logged-btn{
+  position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:#052e16;cursor:pointer;border:none;width:100%;transition:.2s;
+}
+.admin-logged-btn:hover{background:#064e3b}
+.admin-logged-btn .abl{font-size:16px;margin-bottom:2px}
+.admin-logged-btn .abt{font-size:10px;font-weight:700;color:#4ade80}
+.admin-logged-btn .abs{font-size:9px;color:#6ee7b7;margin-top:1px}
+
+/* ══ MAIN LAYOUT ══ */
+.main-layout{flex:1;display:grid;grid-template-columns:1fr 270px;overflow:hidden}
 #map{height:100%}
 .sidebar{background:#0f172a;border-left:1px solid #1e293b;display:flex;flex-direction:column;overflow:hidden}
-.sb-head{padding:10px 14px;border-bottom:1px solid #1e293b;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
-.sb-head h3{font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em}
-.badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px}
+.sb-head{padding:7px 12px;border-bottom:1px solid #1e293b;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.sb-head h3{font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em}
+.badge{font-size:10px;font-weight:700;padding:2px 6px;border-radius:20px}
 .br{background:#450a0a;color:#f87171}.bg{background:#052e16;color:#4ade80}
-#alerts{overflow-y:auto;max-height:180px;flex-shrink:0}
-.alert-row{padding:8px 14px;border-bottom:1px solid #1e293b;display:flex;gap:8px;align-items:flex-start}
-.ai{width:26px;height:26px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
-.ai-r{background:#450a0a}.ai-a{background:#451a03}.ai-g{background:#052e16}
+#alerts-list{overflow-y:auto;max-height:200px;flex-shrink:0}
+.alert-row{padding:6px 12px;border-bottom:1px solid #1e293b;display:flex;gap:7px}
+.ai{width:22px;height:22px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0}
+.ai-r{background:#450a0a}.ai-a{background:#451a03}
 .at{font-size:11px;font-weight:600;color:#e2e8f0}
 .as{font-size:10px;color:#64748b;margin-top:1px}
-#boats-list{overflow-y:auto;flex:1}
-.boat-row{padding:10px 14px;border-bottom:1px solid #1e293b;display:flex;align-items:center;gap:10px;cursor:pointer;transition:background .15s}
+#boats-monitor{overflow-y:auto;flex:1}
+.boat-row{padding:8px 12px;border-bottom:1px solid #1e293b;display:flex;align-items:center;gap:8px;cursor:pointer}
 .boat-row:hover{background:#1e293b}
-.bdot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
-.bs{background:#22c55e}.bw{background:#f59e0b;animation:blink 1s infinite}.bv{background:#ef4444;animation:blink .6s infinite}
+.bdot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.bs{background:#22c55e}.bw{background:#f59e0b;animation:blink .8s infinite}.bv{background:#ef4444;animation:blink .4s infinite}
 .bi{flex:1}
-.bid{font-size:13px;font-weight:700;color:#f1f5f9}
-.bcoord{font-size:10px;color:#64748b;font-family:monospace;margin-top:1px}
-.bstat{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px}
+.bid{font-size:12px;font-weight:700;color:#f1f5f9}
+.bcoord{font-size:10px;color:#64748b;font-family:monospace}
+.bstat{font-size:10px;font-weight:700;padding:2px 6px;border-radius:20px}
 .bss{background:#052e16;color:#4ade80}.bsw{background:#451a03;color:#fbbf24}.bsv{background:#450a0a;color:#f87171}
-.no-data{padding:20px;text-align:center;color:#475569;font-size:12px}
-.pbar{background:#0f172a;border-top:1px solid #1e293b;padding:6px 14px;font-size:10px;color:#475569;display:flex;justify-content:space-between;flex-shrink:0}
+.no-data{padding:14px;text-align:center;color:#475569;font-size:11px}
+.pbar{background:#0f172a;border-top:1px solid #1e293b;padding:4px 12px;font-size:10px;color:#475569;display:flex;justify-content:space-between;flex-shrink:0}
+.gps-btn-map{position:absolute;bottom:20px;right:10px;z-index:1000;background:#2563eb;color:#fff;border:none;border-radius:8px;padding:7px 12px;font-size:11px;font-weight:600;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.4)}
+.my-loc{width:14px;height:14px;border-radius:50%;background:#2563eb;border:3px solid #fff;box-shadow:0 0 0 3px rgba(37,99,235,.4)}
 </style>
 </head>
 <body>
+
+<!-- ══ LOGIN MODAL ══ -->
+<div class="modal-bg" id="login-modal">
+  <div class="modal" style="position:relative">
+    <button class="mclose" onclick="closeLogin()">✕</button>
+    <div style="text-align:center;font-size:36px;margin-bottom:8px">🔐</div>
+    <div class="modal-title">Ingia kama Admin</div>
+    <div class="modal-sub">Udhibiti wa Mfumo wa Uvuvi</div>
+    <div class="mfield">
+      <label>JINA LA MTUMIAJI</label>
+      <input type="text" id="lu" placeholder="admin" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <div class="mfield">
+      <label>NENO LA SIRI</label>
+      <input type="password" id="lp" placeholder="••••••" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <button class="mlogin-btn" onclick="doLogin()">🔐 INGIA</button>
+    <div class="merror" id="lerr">❌ Jina au neno la siri si sahihi!</div>
+  </div>
+</div>
+
+<!-- ══ ADMIN PANEL MODAL ══ -->
+<div class="admin-modal" id="admin-modal">
+  <div class="admin-panel">
+    <div class="admin-header">
+      <div class="admin-title">⚙️ Admin Panel — Usajili wa Boti</div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <span style="font-size:11px;color:#4ade80">✅ Umeingia kama: <b id="admin-user-lbl">—</b></span>
+        <button class="admin-close-btn" onclick="doLogout()">🚪 Toka</button>
+        <button class="admin-close-btn" onclick="closeAdminPanel()">✕ Funga</button>
+      </div>
+    </div>
+    <div class="admin-body">
+
+      <!-- Summary -->
+      <div class="asum">
+        <div class="asum-card"><div class="asum-num c-blue" id="tot-boats">0</div><div class="asum-lbl">Boti Zote</div></div>
+        <div class="asum-card"><div class="asum-num c-green" id="act-boats">0</div><div class="asum-lbl">Zinafanya Kazi</div></div>
+        <div class="asum-card"><div class="asum-num" style="color:#64748b" id="ina-boats">0</div><div class="asum-lbl">Zimesimamishwa</div></div>
+      </div>
+
+      <!-- Register Form -->
+      <div class="asection">
+        <div class="asection-title">➕ Sajili Boti Mpya</div>
+        <div class="aform">
+          <div class="afield"><label>NAMBARI YA BOTI</label><input type="text" id="b-id" placeholder="BOAT-001" style="text-transform:uppercase"></div>
+          <div class="afield"><label>JINA LA BOTI</label><input type="text" id="b-name" placeholder="Samaki Mkuu"></div>
+          <div class="afield"><label>MMILIKI</label><input type="text" id="b-owner" placeholder="Jina la mmiliki"></div>
+          <button class="areg-btn" onclick="registerBoat()">➕ Sajili</button>
+        </div>
+        <div class="amsg" id="amsg"></div>
+      </div>
+
+      <!-- Boats Table -->
+      <div class="asection">
+        <div class="asection-title">🚤 Boti Zilizosajiliwa</div>
+        <div style="overflow-x:auto">
+          <table class="atable">
+            <thead>
+              <tr>
+                <th>#</th><th>Nambari</th><th>Jina</th><th>Mmiliki</th><th>Tarehe</th><th>Hali</th><th>Futa</th>
+              </tr>
+            </thead>
+            <tbody id="boats-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ══ TOPBAR ══ -->
 <div class="topbar">
   <div class="brand">⚓ Mfumo wa Udhibiti wa Uvuvi — Geofencing</div>
   <div class="topbar-right">
-    <div class="conn-pill"><div class="cdot ok" id="cdot"></div><span id="clabel">Imeunganika</span></div>
+    <div class="conn-pill"><div class="cdot" id="cdot"></div><span id="clabel">Inaunganika...</span></div>
     <div class="live-pill"><div class="ldot"></div>LIVE</div>
-    <span style="font-size:12px;color:#64748b" id="clock"></span>
+    <span style="font-size:11px;color:#64748b" id="clock"></span>
   </div>
 </div>
+
+<!-- ══ ALERT BANNER ══ -->
+<div class="alert-banner" id="alert-banner">
+  <div class="bled"></div>
+  <div class="bicon">🚨</div>
+  <div class="btext">
+    <div class="btitle" id="btitle">⛔ UKIUKAJI WA MPAKA!</div>
+    <div class="bsub" id="bsub">—</div>
+  </div>
+  <button class="bclose" onclick="closeBanner()">✅ Nimeona</button>
+</div>
+
+<!-- ══ LED BAR ══ -->
+<div class="led-bar">
+  <span style="font-size:10px;color:#475569;font-weight:700">HALI:</span>
+  <div class="led-item"><div class="led led-off" id="led-s"></div><span class="llbl" id="lbl-s">SALAMA</span></div>
+  <div class="ldiv"></div>
+  <div class="led-item"><div class="led led-off" id="led-w"></div><span class="llbl" id="lbl-w">ONYO</span></div>
+  <div class="ldiv"></div>
+  <div class="led-item"><div class="led led-off" id="led-d"></div><span class="llbl" id="lbl-d">HATARI</span></div>
+  <div class="ldiv"></div>
+  <span class="stxt" id="stxt">Inasubiri data...</span>
+  <div class="bzrw">
+    <span class="bzrl">🔊</span>
+    <button class="bzrb" id="bzrb" onclick="toggleBuzz()">OFF</button>
+  </div>
+</div>
+
+<!-- ══ STATS BAR ══ -->
 <div class="stats">
-  <div class="stat"><div class="stat-label">Pakiti</div><div class="stat-val c-blue" id="s-packets">0</div></div>
+  <!-- Slot 1: Admin button -->
+  <div class="stat" style="padding:0;overflow:hidden">
+    <button class="admin-login-btn" id="admin-btn" onclick="openLogin()">
+      <span class="abl">🔐</span>
+      <span class="abt">ADMIN LOGIN</span>
+      <span class="abs">Bonyeza kuingia</span>
+    </button>
+    <button class="admin-logged-btn" id="admin-logged-btn" style="display:none" onclick="openAdminPanel()">
+      <span class="abl">⚙️</span>
+      <span class="abt">ADMIN PANEL</span>
+      <span class="abs" id="admin-boats-count">Boti: 0</span>
+    </button>
+  </div>
   <div class="stat"><div class="stat-label">Salama</div><div class="stat-val c-green" id="s-safe">0</div></div>
   <div class="stat"><div class="stat-label">Ukiukaji</div><div class="stat-val c-red" id="s-viol">0</div></div>
   <div class="stat"><div class="stat-label">Onyo</div><div class="stat-val c-amber" id="s-warn">0</div></div>
 </div>
-<div class="main">
-  <div id="map"></div>
+
+<!-- ══ MAIN LAYOUT ══ -->
+<div class="main-layout">
+  <div style="position:relative;height:100%">
+    <div id="map" style="height:100%"></div>
+    <button class="gps-btn-map" onclick="goGPS()">📍 GPS yangu</button>
+  </div>
   <div class="sidebar">
-    <div class="sb-head"><h3>🔔 Arifa</h3><span class="badge br" id="abadge">0</span></div>
-    <div id="alerts"><div class="no-data">Inasubiri data...</div></div>
-    <div class="sb-head" style="border-top:1px solid #1e293b"><h3>🚤 Boti</h3><span class="badge bg" id="bbadge">0</span></div>
-    <div id="boats-list"><div class="no-data">Hakuna boti bado...</div></div>
-    <div class="pbar"><span>Pakiti: <b id="pc">0</b></span><span id="lu">Mwisho: —</span></div>
+    <div class="sb-head"><h3>🚨 Arifa za Ukiukaji</h3><span class="badge br" id="abadge">0</span></div>
+    <div id="alerts-list"><div class="no-data">Inasubiri data...</div></div>
+    <div class="sb-head" style="border-top:1px solid #1e293b"><h3>🚤 Boti Zinazofuatiliwa</h3><span class="badge bg" id="bbadge">0</span></div>
+    <div id="boats-monitor"><div class="no-data">Hakuna boti bado...</div></div>
+    <div class="pbar"><span id="lu-time">Mwisho: —</span><span id="online-c">Online: 0</span></div>
   </div>
 </div>
+
 <script>
-// ── Ramani ──
-const map = L.map('map').setView([-8.934, 33.421], 15);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:19}).addTo(map);
+// ══════════════════════════════════════
+// AUTH
+// ══════════════════════════════════════
+const USERS={'admin':'admin123','msimamizi':'uvuvi2024'};
+let currentAdmin=localStorage.getItem('fms_u')||null;
 
-// Maeneo yaliyokatazwa
-fetch('/api/zones').then(r=>r.json()).then(zones=>{
-  zones.forEach(z=>{
-    const b=z.bounds;
-    const rect=L.rectangle([[b.latMin,b.lonMin],[b.latMax,b.lonMax]],
-      {color:'#ef4444',weight:2,dashArray:'6 4',fillColor:'#ef4444',fillOpacity:.15}).addTo(map);
-    rect.bindTooltip(`🚫 ${z.name}`,{permanent:true,direction:'center'});
+function openLogin(){document.getElementById('login-modal').classList.add('active');}
+function closeLogin(){document.getElementById('login-modal').classList.remove('active');}
+
+function doLogin(){
+  const u=document.getElementById('lu').value.trim();
+  const p=document.getElementById('lp').value;
+  if(USERS[u]&&USERS[u]===p){
+    currentAdmin=u;localStorage.setItem('fms_u',u);
+    closeLogin();setAdminUI(true);
+    openAdminPanel();
+  } else {
+    document.getElementById('lerr').style.display='block';
+    setTimeout(()=>document.getElementById('lerr').style.display='none',3000);
+  }
+}
+
+function doLogout(){
+  currentAdmin=null;localStorage.removeItem('fms_u');
+  setAdminUI(false);closeAdminPanel();
+}
+
+function setAdminUI(logged){
+  document.getElementById('admin-btn').style.display=logged?'none':'flex';
+  document.getElementById('admin-logged-btn').style.display=logged?'flex':'none';
+  if(logged){
+    document.getElementById('admin-user-lbl').textContent=currentAdmin;
+    updateAdminBoatCount();
+  }
+}
+
+function updateAdminBoatCount(){
+  const boats=getBoats();
+  document.getElementById('admin-boats-count').textContent=`Boti: ${boats.length}`;
+  document.getElementById('tot-boats').textContent=boats.length;
+  document.getElementById('act-boats').textContent=boats.filter(b=>b.active).length;
+  document.getElementById('ina-boats').textContent=boats.filter(b=>!b.active).length;
+}
+
+function openAdminPanel(){
+  if(!currentAdmin){openLogin();return;}
+  document.getElementById('admin-modal').classList.add('active');
+  renderBoatsTable();updateAdminBoatCount();
+}
+function closeAdminPanel(){document.getElementById('admin-modal').classList.remove('active');}
+
+// Init auth state
+if(currentAdmin&&USERS[currentAdmin]) setAdminUI(true);
+
+// ══════════════════════════════════════
+// BOATS REGISTER
+// ══════════════════════════════════════
+function getBoats(){try{return JSON.parse(localStorage.getItem('reg_boats')||'[]');}catch(e){return[];}}
+function saveBoats(b){localStorage.setItem('reg_boats',JSON.stringify(b));}
+
+function registerBoat(){
+  const id=document.getElementById('b-id').value.trim().toUpperCase();
+  const name=document.getElementById('b-name').value.trim();
+  const owner=document.getElementById('b-owner').value.trim();
+  const msg=document.getElementById('amsg');
+  if(!id||!name||!owner){
+    showMsg(msg,'❌ Jaza sehemu zote!','#f87171');return;
+  }
+  const boats=getBoats();
+  if(boats.find(b=>b.id===id)){showMsg(msg,`❌ Boti ${id} imeshasajiliwa!`,'#f87171');return;}
+  boats.push({id,name,owner,date:new Date().toLocaleDateString('sw-TZ'),active:true});
+  saveBoats(boats);
+  document.getElementById('b-id').value='';
+  document.getElementById('b-name').value='';
+  document.getElementById('b-owner').value='';
+  showMsg(msg,`✅ Boti ${id} — ${name} imesajiliwa!`,'#4ade80');
+  renderBoatsTable();updateAdminBoatCount();
+}
+
+function showMsg(el,txt,color){
+  el.style.display='block';el.style.color=color;el.textContent=txt;
+  setTimeout(()=>el.style.display='none',3000);
+}
+
+function deleteBoat(id){
+  if(!confirm(`Uhakika unataka kufuta boti ${id}?`)) return;
+  saveBoats(getBoats().filter(b=>b.id!==id));
+  renderBoatsTable();updateAdminBoatCount();
+}
+
+function toggleActive(id){
+  const boats=getBoats();
+  const b=boats.find(x=>x.id===id);
+  if(b){b.active=!b.active;saveBoats(boats);renderBoatsTable();updateAdminBoatCount();}
+}
+
+function renderBoatsTable(){
+  const boats=getBoats();
+  const tbody=document.getElementById('boats-tbody');
+  if(!boats.length){
+    tbody.innerHTML='<tr><td colspan="7" style="text-align:center;color:#475569;padding:16px">Hakuna boti zilizosajiliwa</td></tr>';
+    return;
+  }
+  tbody.innerHTML=boats.map((b,i)=>`
+    <tr>
+      <td style="color:#475569">${i+1}</td>
+      <td><span class="bnum">${b.id}</span></td>
+      <td>${b.name}</td>
+      <td style="color:#94a3b8">${b.owner}</td>
+      <td style="color:#64748b;font-size:10px">${b.date}</td>
+      <td><span class="abadge ${b.active?'abadge-on':'abadge-off'}" onclick="toggleActive('${b.id}')">
+        ${b.active?'✅ Hai':'⏸ Simamisha'}</span></td>
+      <td><button class="adel" onclick="deleteBoat('${b.id}')">🗑 Futa</button></td>
+    </tr>`).join('');
+}
+
+// ══════════════════════════════════════
+// BUZZER
+// ══════════════════════════════════════
+let audioCtx=null,buzzOn=false,buzzTimer=null;
+function toggleBuzz(){
+  buzzOn=!buzzOn;
+  const b=document.getElementById('bzrb');
+  b.textContent=buzzOn?'🔊 ON':'OFF';b.className=buzzOn?'bzrb on':'bzrb';
+  if(!buzzOn)stopBuzz();
+}
+function beep(){
+  try{
+    if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+    const o=audioCtx.createOscillator(),g=audioCtx.createGain();
+    o.connect(g);g.connect(audioCtx.destination);
+    o.frequency.setValueAtTime(1000,audioCtx.currentTime);
+    o.frequency.setValueAtTime(500,audioCtx.currentTime+.15);
+    g.gain.setValueAtTime(.25,audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+.3);
+    o.start();o.stop(audioCtx.currentTime+.3);
+  }catch(e){}
+}
+function startBuzz(){if(buzzOn&&!buzzTimer){beep();buzzTimer=setInterval(beep,900);}}
+function stopBuzz(){clearInterval(buzzTimer);buzzTimer=null;}
+
+// ══════════════════════════════════════
+// LED + BANNER
+// ══════════════════════════════════════
+let curSt='idle';
+function setLEDs(s){
+  if(s===curSt)return;curSt=s;
+  ['s','w','d'].forEach(x=>{
+    document.getElementById('led-'+x).className='led led-off';
+    document.getElementById('lbl-'+x).className='llbl';
   });
-}).catch(()=>{});
+  if(s==='safe'){
+    document.getElementById('led-s').className='led led-green';
+    document.getElementById('lbl-s').className='llbl s';
+    document.getElementById('stxt').innerHTML='<span style="color:#4ade80">✅ Hali ya kawaida</span>';
+    closeBanner();stopBuzz();
+  } else if(s==='warning'){
+    document.getElementById('led-w').className='led led-amber';
+    document.getElementById('lbl-w').className='llbl w';
+    document.getElementById('stxt').innerHTML='<span style="color:#fbbf24">⚠️ Boti inakaribia mpaka</span>';
+    stopBuzz();
+  } else if(s==='violation'){
+    document.getElementById('led-d').className='led led-red';
+    document.getElementById('lbl-d').className='llbl d';
+    document.getElementById('stxt').innerHTML='<span style="color:#f87171;font-weight:700">⛔ UKIUKAJI UNAENDELEA!</span>';
+    startBuzz();
+    if(navigator.vibrate)navigator.vibrate([400,100,400,100,400]);
+  }
+}
 
-// ── State ──
-const boats={},markers={},alerts=[];
-let packets=0,dangerCount=0;
+// Boti nyingi zinazovuka — onyesha zote
+let violatingBoats=new Set();
+function updateBanner(){
+  if(violatingBoats.size===0){closeBanner();return;}
+  const list=[...violatingBoats];
+  document.getElementById('btitle').textContent=
+    `⛔ UKIUKAJI! Boti ${list.length>1?list.length+' zimevuka':'imevuka'} mpaka!`;
+  // Onyesha kila boti
+  const details=list.map(id=>{
+    const b=boatsData[id];
+    if(!b)return '';
+    return `• ${id}${b.name?' ('+b.name+')':''} — ${b.zone||'Eneo Lililokatazwa'}`;
+  }).filter(Boolean).join('\n');
+  document.getElementById('bsub').style.whiteSpace='pre';
+  document.getElementById('bsub').textContent=details;
+  document.getElementById('alert-banner').classList.add('active');
+}
+function closeBanner(){
+  document.getElementById('alert-banner').classList.remove('active');
+}
 
-function icon(status){
+// ══════════════════════════════════════
+// MAP
+// ══════════════════════════════════════
+const map=L.map('map').setView([-8.934,33.421],15);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:19}).addTo(map);
+let myLoc=null;
+
+function goGPS(){
+  if(!navigator.geolocation){alert('GPS haisaidiwi');return;}
+  navigator.geolocation.getCurrentPosition(pos=>{
+    const lat=pos.coords.latitude,lon=pos.coords.longitude;
+    map.setView([lat,lon],17);
+    const icon=L.divIcon({className:'',html:'<div class="my-loc"></div>',iconSize:[14,14],iconAnchor:[7,7]});
+    if(myLoc)map.removeLayer(myLoc);
+    myLoc=L.marker([lat,lon],{icon}).addTo(map).bindPopup('📍 Uko hapa').openPopup();
+  },()=>alert('Ruhusu GPS kwenye browser'));
+}
+
+// Zones on monitor map
+let mZoneLayers=[];
+function loadMonitorZones(){
+  mZoneLayers.forEach(l=>map.removeLayer(l));mZoneLayers=[];
+  getZones().forEach(z=>{
+    const r=L.rectangle([[z.latMin,z.lonMin],[z.latMax,z.lonMax]],
+      {color:'#ef4444',weight:2,dashArray:'6 4',fillColor:'#ef4444',fillOpacity:.15}).addTo(map);
+    r.bindTooltip('🚫 '+z.name,{permanent:true,direction:'center'});
+    mZoneLayers.push(r);
+  });
+}
+function getZones(){try{return JSON.parse(localStorage.getItem('gz')||'[]');}catch(e){return[];}}
+
+// ══════════════════════════════════════
+// MONITOR
+// ══════════════════════════════════════
+const boatsData={},markers={},alertsList=[];
+let dangerCount=0,lastViolKey='';
+
+function getBoatInfo(id){
+  const b=getBoats().find(x=>x.id===id);
+  return b||null;
+}
+
+function checkLocal(lat,lon){
+  for(const z of getZones()){
+    if(lat>=z.latMin&&lat<=z.latMax&&lon>=z.lonMin&&lon<=z.lonMax)return{s:'violation',z:z.name};
+    const M=.001;
+    if(lat>=z.latMin-M&&lat<=z.latMax+M&&lon>=z.lonMin-M&&lon<=z.lonMax+M)return{s:'warning',z:z.name};
+  }
+  return{s:'safe',z:null};
+}
+
+function boatIcon(status){
   const c=status==='violation'?'#ef4444':status==='warning'?'#f59e0b':'#22c55e';
   return L.divIcon({className:'',
-    html:`<div style="width:30px;height:30px;border-radius:50%;background:${c};border:3px solid #fff;display:flex;align-items:center;justify-content:center;font-size:14px;box-shadow:0 0 0 2px ${c}">⚓</div>`,
-    iconSize:[30,30],iconAnchor:[15,15]});
+    html:`<div style="width:28px;height:28px;border-radius:50%;background:${c};border:3px solid #fff;display:flex;align-items:center;justify-content:center;font-size:13px;box-shadow:0 0 0 2px ${c}">⚓</div>`,
+    iconSize:[28,28],iconAnchor:[14,14]});
 }
 
 function updateBoat(b){
-  boats[b.id]=b;
-  packets=b.packet||packets+1;
-  if(markers[b.id]){markers[b.id].setLatLng([b.lat,b.lon]);markers[b.id].setIcon(icon(b.status));}
+  const chk=checkLocal(b.lat,b.lon);
+  if(chk.s==='violation'){b.status='violation';b.zone=chk.z;}
+  else if(chk.s==='warning'&&b.status==='safe'){b.status='warning';b.zone=chk.z;}
+  const info=getBoatInfo(b.id);
+  b.name=info?info.name:'';
+  boatsData[b.id]=b;
+
+  if(markers[b.id]){markers[b.id].setLatLng([b.lat,b.lon]);markers[b.id].setIcon(boatIcon(b.status));}
   else{
-    const m=L.marker([b.lat,b.lon],{icon:icon(b.status)}).addTo(map);
-    m.bindPopup('');markers[b.id]=m;
-    map.setView([b.lat,b.lon],15);
+    const m=L.marker([b.lat,b.lon],{icon:boatIcon(b.status)}).addTo(map);
+    m.bindPopup('');markers[b.id]=m;map.setView([b.lat,b.lon],15);
   }
-  markers[b.id].getPopup().setContent(`
-    <div style="font-family:monospace;font-size:12px;line-height:1.7">
-    <b style="font-size:14px">${b.id}</b><br>
-    Lat: <b>${b.lat.toFixed(6)}</b><br>
-    Lon: <b>${b.lon.toFixed(6)}</b><br>
+  markers[b.id].getPopup().setContent(
+    `<div style="font-family:monospace;font-size:12px;line-height:1.8">
+    <b style="font-size:14px">${b.id}</b>${b.name?'<br><span style="color:#94a3b8">'+b.name+'</span>':''}<br>
+    Lat: <b>${b.lat.toFixed(6)}</b><br>Lon: <b>${b.lon.toFixed(6)}</b><br>
     <b style="color:${b.status==='violation'?'#dc2626':b.status==='warning'?'#d97706':'#16a34a'}">
-      ${b.status==='violation'?'⛔ UKIUKAJI':b.status==='warning'?'⚠️ ONYO':'✅ SALAMA'}
-    </b>${b.zone?`<br>📍 ${b.zone}`:''}
+    ${b.status==='violation'?'⛔ UKIUKAJI':b.status==='warning'?'⚠️ ONYO':'✅ SALAMA'}</b>
+    ${b.zone?`<br>📍 ${b.zone}`:''}
     <br><small>${new Date(b.time).toLocaleTimeString()}</small></div>`);
-  render();
+
+  // Track violating boats
+  if(b.status==='violation') violatingBoats.add(b.id);
+  else violatingBoats.delete(b.id);
+
+  // Worst status
+  const all=Object.values(boatsData);
+  const worst=all.some(x=>x.status==='violation')?'violation':all.some(x=>x.status==='warning')?'warning':'safe';
+  setLEDs(worst);
+  updateBanner();
+
+  // Push alert for new violation
+  if(b.status==='violation'){
+    const key=b.id+'_'+Math.floor(Date.now()/30000); // once per 30s per boat
+    if(key!==lastViolKey){
+      lastViolKey=key;
+      pushAlert({level:'danger',
+        message:`🚨 ${b.id}${b.name?' ('+b.name+')':''} amevuka mpaka! ${b.zone||''}`,
+        time:b.time});
+    }
+  }
+  renderMonitor();
 }
 
-function addAlert(a){
-  alerts.unshift(a);if(alerts.length>50)alerts.pop();
-  if(a.level==='danger')dangerCount++;
-  renderAlerts();
-  document.getElementById('abadge').textContent=dangerCount;
-  if(markers[a.boat?.id])markers[a.boat.id].openPopup();
+function pushAlert(a){
+  alertsList.unshift(a);if(alertsList.length>100)alertsList.pop();
+  dangerCount++;document.getElementById('abadge').textContent=dangerCount;
+  document.getElementById('alerts-list').innerHTML=alertsList.slice(0,25).map(x=>`
+    <div class="alert-row">
+      <div class="ai ${x.level==='danger'?'ai-r':'ai-a'}">${x.level==='danger'?'🚨':'⚠️'}</div>
+      <div><div class="at">${x.message}</div><div class="as">${new Date(x.time).toLocaleTimeString()}</div></div>
+    </div>`).join('');
 }
 
-function render(){
-  const all=Object.values(boats);
-  document.getElementById('s-packets').textContent=packets;
+function renderMonitor(){
+  const all=Object.values(boatsData);
   document.getElementById('s-safe').textContent=all.filter(b=>b.status==='safe').length;
   document.getElementById('s-viol').textContent=all.filter(b=>b.status==='violation').length;
   document.getElementById('s-warn').textContent=all.filter(b=>b.status==='warning').length;
   document.getElementById('bbadge').textContent=all.length;
-  document.getElementById('pc').textContent=packets;
-  document.getElementById('lu').textContent='Mwisho: '+new Date().toLocaleTimeString();
-  const bl=document.getElementById('boats-list');
-  if(!all.length){bl.innerHTML='<div class="no-data">Inasubiri data...</div>';return;}
-  bl.innerHTML=all.map(b=>`
+  document.getElementById('lu-time').textContent='Mwisho: '+new Date().toLocaleTimeString();
+  document.getElementById('online-c').textContent='Online: '+all.length;
+  document.getElementById('boats-monitor').innerHTML=all.length?all.map(b=>`
     <div class="boat-row" onclick="focusBoat('${b.id}')">
       <div class="bdot ${b.status==='safe'?'bs':b.status==='warning'?'bw':'bv'}"></div>
-      <div class="bi"><div class="bid">${b.id}</div>
-      <div class="bcoord">${b.lat.toFixed(5)}, ${b.lon.toFixed(5)}</div></div>
+      <div class="bi">
+        <div class="bid">${b.id}${b.name?` <span style="color:#64748b;font-size:10px;font-weight:400">${b.name}</span>`:''}</div>
+        <div class="bcoord">${b.lat.toFixed(5)}, ${b.lon.toFixed(5)}</div>
+      </div>
       <span class="bstat ${b.status==='safe'?'bss':b.status==='warning'?'bsw':'bsv'}">
         ${b.status==='safe'?'Salama':b.status==='warning'?'Onyo':'Ukiukaji'}</span>
-    </div>`).join('');
-}
-
-function renderAlerts(){
-  const el=document.getElementById('alerts');
-  if(!alerts.length){el.innerHTML='<div class="no-data">Hakuna arifa bado...</div>';return;}
-  el.innerHTML=alerts.slice(0,15).map(a=>`
-    <div class="alert-row">
-      <div class="ai ${a.level==='danger'?'ai-r':a.level==='warning'?'ai-a':'ai-g'}">
-        ${a.level==='danger'?'🚨':a.level==='warning'?'⚠️':'✅'}</div>
-      <div><div class="at">${a.message}</div>
-      <div class="as">${new Date(a.time).toLocaleTimeString()}</div></div>
-    </div>`).join('');
+    </div>`).join(''):'<div class="no-data">Inasubiri data...</div>';
 }
 
 function focusBoat(id){
-  const b=boats[id];
-  if(b&&markers[id]){map.setView([b.lat,b.lon],16);markers[id].openPopup();}
+  const b=boatsData[id];if(b&&markers[id]){map.setView([b.lat,b.lon],16);markers[id].openPopup();}
 }
 
-setInterval(()=>{document.getElementById('clock').textContent=new Date().toLocaleTimeString();},1000);
+// ══════════════════════════════════════
+// POLLING
+// ══════════════════════════════════════
+setInterval(()=>document.getElementById('clock').textContent=new Date().toLocaleTimeString(),1000);
 
-// ── Polling kila sekunde 2 (rahisi na ya kuaminika) ──
 async function poll(){
   try{
-    const [boatsRes,alertsRes]=await Promise.all([fetch('/api/boats'),fetch('/api/alerts')]);
-    const boatsData=await boatsRes.json();
-    const alertsData=await alertsRes.json();
-    boatsData.forEach(updateBoat);
-    // Ongeza arifa mpya tu
-    alertsData.forEach(a=>{
-      if(!alerts.find(x=>x.time===a.time))addAlert(a);
-    });
+    const r=await fetch('/api/boats');
+    const data=await r.json();
+    data.forEach(updateBoat);
     document.getElementById('cdot').classList.add('ok');
     document.getElementById('clabel').textContent='Imeunganika ✅';
   }catch(e){
@@ -189,7 +649,7 @@ async function poll(){
   }
 }
 
-// Anza polling mara moja kisha kila sekunde 2
+loadMonitorZones();
 poll();
 setInterval(poll,2000);
 </script>
