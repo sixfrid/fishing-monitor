@@ -6,6 +6,8 @@
 <title>Mfumo wa Uvuvi — Geofencing</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:system-ui,sans-serif;background:#0f172a;color:#e2e8f0;height:100vh;display:flex;flex-direction:column;overflow:hidden}
@@ -138,7 +140,7 @@ body{font-family:system-ui,sans-serif;background:#0f172a;color:#e2e8f0;height:10
 #alerts-list{overflow-y:auto;max-height:200px;flex-shrink:0}
 .alert-row{padding:6px 12px;border-bottom:1px solid #1e293b;display:flex;gap:7px}
 .ai{width:22px;height:22px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0}
-.ai-r{background:#450a0a}.ai-a{background:#451a03}
+.ai-r{background:#450a0a}.ai-a{background:#451a03}.ai-g{background:#052e16}
 .at{font-size:11px;font-weight:600;color:#e2e8f0}
 .as{font-size:10px;color:#64748b;margin-top:1px}
 #boats-monitor{overflow-y:auto;flex:1}
@@ -223,6 +225,21 @@ body{font-family:system-ui,sans-serif;background:#0f172a;color:#e2e8f0;height:10
             </thead>
             <tbody id="boats-tbody"></tbody>
           </table>
+        </div>
+      </div>
+
+      <!-- Violation Report (PDF) -->
+      <div class="asection">
+        <div class="asection-title">📄 Ripoti ya Ukiukaji (PDF)</div>
+        <div class="aform" style="grid-template-columns:1fr 1fr 1fr auto">
+          <div class="afield"><label>TANGU TAREHE</label><input type="date" id="rep-from"></div>
+          <div class="afield"><label>HADI TAREHE</label><input type="date" id="rep-to"></div>
+          <div class="afield"><label>BOTI (HIARI)</label><input type="text" id="rep-boat" placeholder="BOAT-001 au wazi=zote" style="text-transform:uppercase"></div>
+          <button class="areg-btn" onclick="downloadViolationPDF()">📥 Pakua PDF</button>
+        </div>
+        <div class="amsg" id="rep-msg"></div>
+        <div style="font-size:10px;color:#64748b;margin-top:8px">
+          Jumla ya matukio ya ukiukaji yaliyorekodiwa: <b id="viol-total-count" style="color:#f87171">0</b>
         </div>
       </div>
 
@@ -364,6 +381,8 @@ function updateAdminBoatCount(){
   document.getElementById('tot-boats').textContent=boats.length;
   document.getElementById('act-boats').textContent=boats.filter(b=>b.active).length;
   document.getElementById('ina-boats').textContent=boats.filter(b=>!b.active).length;
+  const vc=document.getElementById('viol-total-count');
+  if(vc)vc.textContent=getViolationHistory().length;
 }
 
 function openAdminPanel(){
@@ -582,8 +601,14 @@ function boatIcon(status){
 
 function updateBoat(b){
   const chk=checkLocal(b.lat,b.lon);
-  if(chk.s==='violation'){b.status='violation';b.zone=chk.z;}
-  else if(chk.s==='warning'&&b.status==='safe'){b.status='warning';b.zone=chk.z;}
+  const prevStatus=boatsData[b.id]?boatsData[b.id].status:null;
+  if(chk.s==='violation'){
+    b.status='violation';b.zone=chk.z;
+  } else if(chk.s==='warning'){
+    b.status='warning';b.zone=chk.z;
+  } else {
+    b.status='safe';b.zone=null; // ✅ boti imerudi eneo salama - zima onyo/hatari
+  }
   const info=getBoatInfo(b.id);
   b.name=info?info.name:'';
   b.registered=!!info;
@@ -624,16 +649,137 @@ function updateBoat(b){
         message:`🚨 ${b.id}${b.name?' ('+b.name+')':''} amevuka mpaka! ${b.zone||''}`,
         time:b.time});
     }
+    // Hifadhi kwenye violation history (kwa ripoti ya PDF)
+    recordViolationEvent(b);
+  }
+  // Boti imerudi salama baada ya kuwa onyo/ukiukaji -> taarifa ya kijani
+  if(b.status==='safe' && (prevStatus==='violation'||prevStatus==='warning')){
+    pushAlert({level:'safe',
+      message:`✅ ${b.id}${b.name?' ('+b.name+')':''} amerudi eneo salama`,
+      time:b.time});
+    closeViolationEvent(b.id);
   }
   renderMonitor();
 }
 
+// ══════════════════════════════════════
+// VIOLATION HISTORY (kwa ajili ya PDF report)
+// ══════════════════════════════════════
+function getViolationHistory(){
+  try{return JSON.parse(localStorage.getItem('viol_history')||'[]');}catch(e){return[];}
+}
+function saveViolationHistory(h){
+  if(h.length>500)h=h.slice(h.length-500); // weka max 500 records
+  localStorage.setItem('viol_history',JSON.stringify(h));
+}
+const openViolations={}; // boatId -> index kwenye history ambayo bado 'haijafungwa'
+
+function recordViolationEvent(b){
+  const history=getViolationHistory();
+  if(openViolations[b.id]!==undefined){
+    // tayari kuna violation 'inayoendelea' kwa boti hii - sasisha muda wa mwisho
+    const idx=openViolations[b.id];
+    if(history[idx]){
+      history[idx].endTime=b.time;
+      history[idx].lastLat=b.lat;
+      history[idx].lastLon=b.lon;
+      saveViolationHistory(history);
+    }
+    return;
+  }
+  // violation mpya
+  history.push({
+    boatId:b.id,boatName:b.name||'',zone:b.zone||'',
+    startTime:b.time,endTime:b.time,
+    startLat:b.lat,startLon:b.lon,lastLat:b.lat,lastLon:b.lon
+  });
+  openViolations[b.id]=history.length-1;
+  saveViolationHistory(history);
+}
+function closeViolationEvent(boatId){
+  delete openViolations[boatId];
+}
+
+// ══════════════════════════════════════
+// PDF REPORT — Ukiukaji
+// ══════════════════════════════════════
+function fmtDateTime(ts){
+  const d=new Date(ts);
+  return d.toLocaleDateString('sw-TZ')+' '+d.toLocaleTimeString('sw-TZ');
+}
+function fmtDuration(startTs,endTs){
+  let sec=Math.max(0,Math.round((endTs-startTs)/1000));
+  const h=Math.floor(sec/3600);sec%=3600;
+  const m=Math.floor(sec/60);sec%=60;
+  if(h>0)return `${h}h ${m}m`;
+  if(m>0)return `${m}m ${sec}s`;
+  return `${sec}s`;
+}
+
+function downloadViolationPDF(){
+  const msg=document.getElementById('rep-msg');
+  if(typeof window.jspdf==='undefined'){
+    showMsg(msg,'❌ Maktaba ya PDF haijapakiwa. Hakikisha una intaneti.','#f87171');return;
+  }
+  const fromVal=document.getElementById('rep-from').value;
+  const toVal=document.getElementById('rep-to').value;
+  const boatFilter=document.getElementById('rep-boat').value.trim().toUpperCase();
+
+  const fromTs=fromVal?new Date(fromVal+'T00:00:00').getTime():0;
+  const toTs=toVal?new Date(toVal+'T23:59:59').getTime():Infinity;
+
+  let history=getViolationHistory();
+  history=history.filter(h=>h.startTime>=fromTs && h.startTime<=toTs);
+  if(boatFilter) history=history.filter(h=>h.boatId.toUpperCase()===boatFilter);
+  history.sort((a,b)=>b.startTime-a.startTime);
+
+  if(!history.length){
+    showMsg(msg,'⚠️ Hakuna matukio ya ukiukaji kwa vigezo hivyo.','#fbbf24');return;
+  }
+
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF();
+
+  doc.setFontSize(16);
+  doc.text('Ripoti ya Ukiukaji wa Mipaka — Mfumo wa Uvuvi',14,16);
+  doc.setFontSize(10);
+  doc.setTextColor(100);
+  const rangeTxt=`Kipindi: ${fromVal||'Mwanzo'}  hadi  ${toVal||'Sasa'}`+(boatFilter?`   |   Boti: ${boatFilter}`:'');
+  doc.text(rangeTxt,14,23);
+  doc.text(`Imetolewa: ${new Date().toLocaleString('sw-TZ')}`,14,28);
+  doc.text(`Jumla ya matukio: ${history.length}`,14,33);
+
+  const rows=history.map((h,i)=>[
+    i+1,
+    h.boatId,
+    h.boatName||'-',
+    h.zone||'-',
+    fmtDateTime(h.startTime),
+    fmtDateTime(h.endTime),
+    fmtDuration(h.startTime,h.endTime),
+    h.lastLat.toFixed(5)+', '+h.lastLon.toFixed(5)
+  ]);
+
+  doc.autoTable({
+    startY:38,
+    head:[['#','Boti','Jina','Eneo','Mwanzo','Mwisho','Muda','Coordinate za Mwisho']],
+    body:rows,
+    styles:{fontSize:8},
+    headStyles:{fillColor:[37,99,235]},
+    theme:'grid'
+  });
+
+  const fname=`ripoti_ukiukaji_${new Date().toISOString().slice(0,10)}.pdf`;
+  doc.save(fname);
+  showMsg(msg,`✅ Ripoti imepakuliwa: ${fname}`,'#4ade80');
+}
+
 function pushAlert(a){
   alertsList.unshift(a);if(alertsList.length>100)alertsList.pop();
-  dangerCount++;document.getElementById('abadge').textContent=dangerCount;
+  if(a.level!=='safe'){dangerCount++;document.getElementById('abadge').textContent=dangerCount;}
   document.getElementById('alerts-list').innerHTML=alertsList.slice(0,25).map(x=>`
     <div class="alert-row">
-      <div class="ai ${x.level==='danger'?'ai-r':'ai-a'}">${x.level==='danger'?'🚨':'⚠️'}</div>
+      <div class="ai ${x.level==='danger'?'ai-r':x.level==='safe'?'ai-g':'ai-a'}">${x.level==='danger'?'🚨':x.level==='safe'?'✅':'⚠️'}</div>
       <div><div class="at">${x.message}</div><div class="as">${new Date(x.time).toLocaleTimeString()}</div></div>
     </div>`).join('');
 }
