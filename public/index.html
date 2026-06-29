@@ -447,6 +447,275 @@ setInterval(() => {
   document.getElementById('clock').textContent = new Date().toLocaleTimeString();
 }, 1000);
 
+// ════════════════════════════════adge">0</span>
+      </div>
+      <div id="alerts">
+        <div class="no-data">Inasubiri data kutoka Arduino...</div>
+      </div>
+      <div class="divider"></div>
+      <div class="sb-head">
+        <h3>🚤 Boti</h3>
+        <span class="badge bg" id="boat-count">0</span>
+      </div>
+      <div id="boats-list">
+        <div class="no-data">Hakuna boti zimegunduliwa bado...</div>
+      </div>
+      <div class="packet-bar">
+        <span>Pakiti: <strong id="pcount">0</strong></span>
+        <span id="last-packet">Mwisho: —</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════
+// AUTH — Kuingia kama Admin
+// Taarifa zote za boti/ukiukaji zinapatikana TU
+// baada ya kuingia kwa mafanikio (token sahihi).
+// ════════════════════════════════════════════════
+let AUTH_TOKEN = localStorage.getItem('uvuvi_admin_token') || null;
+
+function authHeaders(){ return AUTH_TOKEN ? { 'Authorization': 'Bearer ' + AUTH_TOKEN } : {}; }
+
+function showLogin(message){
+  AUTH_TOKEN = null;
+  localStorage.removeItem('uvuvi_admin_token');
+  document.getElementById('login-overlay').style.display = 'flex';
+  document.getElementById('app-root').style.display = 'none';
+  document.getElementById('login-error').textContent = message || '';
+  if (ws) { try { ws.close(); } catch(e){} }
+}
+
+function showApp(){
+  document.getElementById('login-overlay').style.display = 'none';
+  document.getElementById('app-root').style.display = 'flex';
+  loadInitialData();
+  connect();
+}
+
+document.getElementById('login-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const username = document.getElementById('login-user').value.trim();
+  const password = document.getElementById('login-pass').value;
+  const errEl = document.getElementById('login-error');
+  errEl.textContent = '';
+  try {
+    const r = await fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password })
+    });
+    const data = await r.json();
+    if (r.ok && data.token) {
+      AUTH_TOKEN = data.token;
+      localStorage.setItem('uvuvi_admin_token', AUTH_TOKEN);
+      showApp();
+    } else {
+      errEl.textContent = data.error || 'Imeshindikana kuingia';
+    }
+  } catch (err) {
+    errEl.textContent = 'Hitilafu ya mtandao, jaribu tena';
+  }
+});
+
+document.getElementById('logout-btn').addEventListener('click', async () => {
+  try { await fetch('/api/logout', { method: 'POST', headers: authHeaders() }); } catch(e){}
+  showLogin();
+});
+
+// ════════════════════════════════════════════════
+// ALARM — sauti (hiari ya mtumiaji, kuepuka block ya autoplay)
+// ════════════════════════════════════════════════
+let soundOn = false;
+let audioCtx = null;
+function toggleSound(){
+  soundOn = !soundOn;
+  const btn = document.getElementById('sound-btn');
+  btn.textContent = soundOn ? '🔊 Sauti: ON' : '🔇 Sauti: OFF';
+  btn.classList.toggle('on', soundOn);
+  if (soundOn && !audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+}
+function beep(){
+  if (!soundOn || !audioCtx) return;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.frequency.value = 880;
+  osc.type = 'square';
+  gain.gain.value = 0.08;
+  osc.connect(gain).connect(audioCtx.destination);
+  osc.start();
+  osc.stop(audioCtx.currentTime + 0.18);
+}
+let beepInterval = null;
+function setAlarm(active, message){
+  const banner = document.getElementById('alarm-banner');
+  if (active) {
+    banner.classList.add('active');
+    document.getElementById('alarm-sub').textContent = message || '';
+    if (!beepInterval) { beep(); beepInterval = setInterval(beep, 1000); }
+  } else {
+    banner.classList.remove('active');
+    if (beepInterval) { clearInterval(beepInterval); beepInterval = null; }
+  }
+}
+
+// ════════════════════════════════════════════════
+// Ramani
+// ════════════════════════════════════════════════
+const map = L.map('map').setView([-8.936, 33.423], 15);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '© OpenStreetMap', maxZoom: 19
+}).addTo(map);
+
+let zoneLayers = [];
+function drawZones(zones){
+  zoneLayers.forEach(l => map.removeLayer(l));
+  zoneLayers = [];
+  (zones || []).forEach(z => {
+    const b = z.bounds;
+    const rect = L.rectangle(
+      [[b.latMin, b.lonMin], [b.latMax, b.lonMax]],
+      { color: '#ef4444', weight: 2, dashArray: '6 4', fillColor: '#ef4444', fillOpacity: .15 }
+    ).addTo(map);
+    rect.bindTooltip(`🚫 ${z.name}`, { permanent: true, direction: 'center', className: 'zone-tip' });
+    zoneLayers.push(rect);
+  });
+}
+
+// ── State ──
+const boats = {};
+const boatMarkers = {};
+const alerts = [];
+let packets = 0;
+
+function makeIcon(status){
+  const c = status === 'violation' ? '#ef4444' : status === 'warning' ? '#f59e0b' : '#22c55e';
+  return L.divIcon({
+    className: '',
+    html: `<div style="width:30px;height:30px;border-radius:50%;background:${c};border:3px solid #fff;display:flex;align-items:center;justify-content:center;font-size:14px;box-shadow:0 0 0 2px ${c}">⚓</div>`,
+    iconSize: [30, 30], iconAnchor: [15, 15]
+  });
+}
+
+function updateBoat(boat){
+  boats[boat.id] = boat;
+  if (boatMarkers[boat.id]) {
+    boatMarkers[boat.id].setLatLng([boat.lat, boat.lon]);
+    boatMarkers[boat.id].setIcon(makeIcon(boat.status));
+  } else {
+    const m = L.marker([boat.lat, boat.lon], { icon: makeIcon(boat.status) }).addTo(map);
+    m.bindPopup('');
+    boatMarkers[boat.id] = m;
+    map.setView([boat.lat, boat.lon], 15);
+  }
+  boatMarkers[boat.id].getPopup().setContent(`
+    <div style="font-family:monospace;font-size:12px;line-height:1.6">
+    <b style="font-size:14px">${boat.id}</b><br>
+    Lat: <b>${boat.lat.toFixed(6)}</b><br>
+    Lon: <b>${boat.lon.toFixed(6)}</b><br>
+    Hali: <b style="color:${boat.status === 'violation' ? '#dc2626' : boat.status === 'warning' ? '#d97706' : '#16a34a'}">
+      ${boat.status === 'violation' ? '⛔ UKIUKAJI' : boat.status === 'warning' ? '⚠️ ONYO' : '✅ SALAMA'}
+    </b>
+    ${boat.zone ? `<br>📍 ${boat.zone}` : ''}
+    <br><small>${new Date(boat.time).toLocaleTimeString()}</small>
+    </div>
+  `);
+  packets = boat.packet || packets + 1;
+  renderAll();
+}
+
+// Log ya ukiukaji — INABAKI (haifutwi), ni historia ya kudumu kwa admin
+function addAlert(a){
+  alerts.unshift(a);
+  if (alerts.length > 200) alerts.pop();
+  renderAlerts();
+}
+
+function renderAll(){
+  const all = Object.values(boats);
+
+  // Hali ya SASA HIVI pekee — hii ndiyo inayoamua alarm/LED/badge.
+  // Boti ikitoka eneo lililokatazwa, violNow inarudi 0 KIOTOMATIKO,
+  // na alarm + LED nyekundu vinazima vyenyewe (huhitaji "Nimeona" la mkono).
+  const violNow = all.filter(b => b.status === 'violation').length;
+  const warnNow = all.filter(b => b.status === 'warning').length;
+  const safeNow = all.filter(b => b.status === 'safe').length;
+
+  document.getElementById('s-packets').textContent = packets;
+  document.getElementById('s-safe').textContent = safeNow;
+  document.getElementById('s-viol').textContent = violNow;
+  document.getElementById('s-warn').textContent = warnNow;
+  document.getElementById('boat-count').textContent = all.length;
+  document.getElementById('pcount').textContent = packets;
+  document.getElementById('last-packet').textContent = 'Mwisho: ' + new Date().toLocaleTimeString();
+
+  // Badge ya log — idadi ya jumla ya matukio ya ukiukaji kwenye historia (haizimi, ni rekodi)
+  document.getElementById('alert-badge').textContent = alerts.filter(a => a.level === 'danger').length;
+
+  // LED + Alarm — vinategemea hali ya SASA HIVI pekee
+  const ledSafe = document.getElementById('led-safe');
+  const ledDanger = document.getElementById('led-danger');
+  const lblSafe = document.getElementById('lbl-safe');
+  const lblDanger = document.getElementById('lbl-danger');
+
+  if (violNow > 0) {
+    ledDanger.className = 'led led-red';
+    lblDanger.className = 'llbl on-r';
+    ledSafe.className = 'led led-off';
+    lblSafe.className = 'llbl';
+    const violBoats = all.filter(b => b.status === 'violation').map(b => b.id).join(', ');
+    setAlarm(true, `Boti zilizo ndani ya eneo lililokatazwa SASA HIVI: ${violBoats}`);
+  } else {
+    ledDanger.className = 'led led-off';
+    lblDanger.className = 'llbl';
+    ledSafe.className = 'led led-green';
+    lblSafe.className = 'llbl on-g';
+    setAlarm(false);
+  }
+
+  const bl = document.getElementById('boats-list');
+  if (!all.length) { bl.innerHTML = '<div class="no-data">Inasubiri data...</div>'; return; }
+  bl.innerHTML = all.map(b => `
+    <div class="boat-row" onclick="focusBoat('${b.id}')">
+      <div class="bdot ${b.status === 'safe' ? 'bs' : b.status === 'warning' ? 'bw' : 'bv'}"></div>
+      <div class="bi">
+        <div class="bid">${b.id}</div>
+        <div class="bcoord">${b.lat.toFixed(5)}, ${b.lon.toFixed(5)}</div>
+      </div>
+      <span class="bstat ${b.status === 'safe' ? 'bss' : b.status === 'warning' ? 'bsw' : 'bsv'}">
+        ${b.status === 'safe' ? 'Salama' : b.status === 'warning' ? 'Onyo' : 'Ukiukaji'}
+      </span>
+    </div>
+  `).join('');
+}
+
+function renderAlerts(){
+  const el = document.getElementById('alerts');
+  if (!alerts.length) { el.innerHTML = '<div class="no-data">Hakuna arifa bado...</div>'; return; }
+  el.innerHTML = alerts.slice(0, 50).map(a => `
+    <div class="alert-row">
+      <div class="ai ${a.level === 'danger' ? 'ai-r' : a.level === 'warning' ? 'ai-a' : 'ai-g'}">
+        ${a.level === 'danger' ? '🚨' : a.level === 'warning' ? '⚠️' : '✅'}
+      </div>
+      <div>
+        <div class="at">${a.message}</div>
+        <div class="as">${new Date(a.time).toLocaleTimeString()}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function focusBoat(id){
+  const b = boats[id];
+  if (b && boatMarkers[id]) { map.setView([b.lat, b.lon], 16); boatMarkers[id].openPopup(); }
+}
+
+// ── Saa ──
+setInterval(() => {
+  document.getElementById('clock').textContent = new Date().toLocaleTimeString();
+}, 1000);
+
 // ════════════════════════════════ex;align-items:center;gap:8px;cursor:pointer}
 .boat-row:hover{background:#1e293b}
 .bdot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
