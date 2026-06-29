@@ -6,145 +6,448 @@
 <title>Mfumo wa Uvuvi — Geofencing</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:system-ui,sans-serif;background:#0f172a;color:#e2e8f0;height:100vh;display:flex;flex-direction:column;overflow:hidden}
 
-/* ══ ADMIN MODAL ══ */
-.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9000;display:none;align-items:center;justify-content:center}
-.modal-bg.active{display:flex}
-.modal{background:#1e293b;border:1px solid #334155;border-radius:14px;padding:32px;width:340px}
-.modal-title{font-size:16px;font-weight:800;color:#f1f5f9;margin-bottom:4px;text-align:center}
-.modal-sub{font-size:11px;color:#64748b;text-align:center;margin-bottom:20px}
-.mfield{margin-bottom:12px}
-.mfield label{font-size:11px;color:#94a3b8;font-weight:600;display:block;margin-bottom:4px}
-.mfield input{width:100%;padding:9px 12px;border-radius:7px;background:#0f172a;border:1px solid #334155;color:#f1f5f9;font-size:12px;outline:none}
-.mfield input:focus{border-color:#2563eb}
-.mlogin-btn{width:100%;padding:10px;border-radius:7px;background:#2563eb;color:#fff;font-size:13px;font-weight:700;border:none;cursor:pointer;margin-top:4px}
-.mlogin-btn:hover{background:#1d4ed8}
-.merror{color:#f87171;font-size:11px;text-align:center;margin-top:8px;display:none}
-.mclose{position:absolute;top:12px;right:14px;background:none;border:none;color:#64748b;font-size:18px;cursor:pointer}
+/* ── Login screen ── */
+#login-overlay{position:fixed;inset:0;background:#0f172a;display:flex;align-items:center;justify-content:center;z-index:1000}
+.login-card{background:#1e293b;border:1px solid #334155;border-radius:14px;padding:32px;width:320px;box-shadow:0 10px 40px rgba(0,0,0,.4)}
+.login-card h2{font-size:16px;color:#f1f5f9;margin-bottom:4px;display:flex;align-items:center;gap:8px}
+.login-sub{font-size:11px;color:#64748b;margin-bottom:20px}
+.login-field{margin-bottom:14px}
+.login-field label{display:block;font-size:11px;color:#94a3b8;margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em}
+.login-field input{width:100%;background:#0f172a;border:1px solid #334155;color:#f1f5f9;border-radius:8px;padding:10px 12px;font-size:13px}
+.login-field input:focus{outline:none;border-color:#60a5fa}
+.login-btn{width:100%;background:#2563eb;color:#fff;border:none;border-radius:8px;padding:11px;font-size:13px;font-weight:600;cursor:pointer;margin-top:6px}
+.login-btn:hover{background:#1d4ed8}
+.login-error{color:#f87171;font-size:12px;margin-top:10px;min-height:14px}
+#app-root{display:none;flex-direction:column;height:100%;flex:1;min-height:0}
 
-/* ══ ADMIN PANEL MODAL ══ */
-.admin-modal{position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:9100;display:none;align-items:flex-start;justify-content:center;padding-top:40px;overflow-y:auto}
-.admin-modal.active{display:flex}
-.admin-panel{background:#0f172a;border:1px solid #334155;border-radius:14px;width:700px;max-width:95vw;margin-bottom:40px}
-.admin-header{background:#1e293b;padding:14px 20px;border-radius:14px 14px 0 0;display:flex;align-items:center;justify-content:space-between}
-.admin-title{font-size:14px;font-weight:800;color:#f1f5f9}
-.admin-close-btn{background:#334155;border:none;color:#94a3b8;padding:4px 12px;border-radius:6px;cursor:pointer;font-size:12px}
-.admin-close-btn:hover{background:#475569}
-.admin-body{padding:20px}
-.asection{background:#1e293b;border-radius:10px;padding:16px;margin-bottom:14px}
-.asection-title{font-size:12px;font-weight:700;color:#f1f5f9;margin-bottom:12px;display:flex;align-items:center;gap:6px}
-.aform{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:8px;align-items:end}
-.afield{display:flex;flex-direction:column;gap:4px}
-.afield label{font-size:10px;color:#94a3b8;font-weight:600}
-.afield input{padding:7px 10px;border-radius:6px;background:#0f172a;border:1px solid #334155;color:#f1f5f9;font-size:11px;outline:none}
-.afield input:focus{border-color:#2563eb}
-.areg-btn{padding:7px 14px;border-radius:6px;background:#2563eb;color:#fff;font-size:11px;font-weight:700;border:none;cursor:pointer;white-space:nowrap}
-.areg-btn:hover{background:#1d4ed8}
-.amsg{font-size:11px;margin-top:6px;display:none}
-/* Summary */
-.asum{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
-.asum-card{background:#1e293b;border-radius:8px;padding:10px;text-align:center}
-.asum-num{font-size:24px;font-weight:800}
-.asum-lbl{font-size:10px;color:#64748b;font-weight:600;text-transform:uppercase}
-/* Table */
-.atable{width:100%;border-collapse:collapse}
-.atable th{font-size:10px;font-weight:700;color:#64748b;text-align:left;padding:7px 10px;border-bottom:1px solid #334155;text-transform:uppercase}
-.atable td{font-size:11px;color:#e2e8f0;padding:9px 10px;border-bottom:1px solid #1e293b;vertical-align:middle}
-.atable tr:hover td{background:rgba(255,255,255,.02)}
-.bnum{font-weight:700;color:#60a5fa;font-family:monospace}
-.abadge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;cursor:pointer}
-.abadge-on{background:#052e16;color:#4ade80}
-.abadge-off{background:#1e293b;color:#64748b}
-.adel{background:#450a0a;color:#f87171;border:none;border-radius:5px;padding:3px 10px;font-size:10px;cursor:pointer;font-weight:600}
-.adel:hover{background:#7f1d1d}
-
-/* ══ TOPBAR ══ */
-.topbar{background:#0f172a;border-bottom:1px solid #1e293b;padding:0 16px;height:48px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
-.brand{font-size:14px;font-weight:700;color:#f1f5f9;display:flex;align-items:center;gap:8px}
-.topbar-right{display:flex;align-items:center;gap:8px}
-.live-pill{background:#16a34a;color:#fff;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;display:flex;align-items:center;gap:4px}
-.ldot{width:6px;height:6px;border-radius:50%;background:#fff;animation:blink 1.5s infinite}
-.conn-pill{display:flex;align-items:center;gap:5px;background:#1e293b;padding:3px 10px;border-radius:20px;font-size:11px}
-.cdot{width:7px;height:7px;border-radius:50%;background:#ef4444}
-.cdot.ok{background:#22c55e;animation:blink 2s infinite}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
-
-/* ══ ALERT BANNER ══ */
-.alert-banner{display:none;flex-shrink:0;background:#7f1d1d;border-bottom:2px solid #ef4444;padding:6px 16px;flex-direction:row;align-items:center;gap:12px;animation:bflash .6s infinite alternate}
-.alert-banner.active{display:flex}
+/* ── Alarm banner: inawaka ndani ya eneo lililokatazwa, inazima yenyewe nje ── */
+#alarm-banner{display:none;flex-shrink:0;background:#7f1d1d;border-bottom:2px solid #ef4444;padding:8px 16px;align-items:center;gap:12px;animation:bflash .6s infinite alternate}
+#alarm-banner.active{display:flex}
 @keyframes bflash{0%{background:#7f1d1d}100%{background:#450a0a}}
-.bicon{font-size:20px;animation:shake .3s infinite alternate}
+.bicon{font-size:22px;animation:shake .3s infinite alternate;flex-shrink:0}
 @keyframes shake{0%{transform:rotate(-8deg)}100%{transform:rotate(8deg)}}
 .btext{flex:1}
 .btitle{font-size:13px;font-weight:800;color:#fca5a5}
-.bsub{font-size:11px;color:#fecaca;margin-top:2px;line-height:1.5}
-.bclose{background:#ef4444;color:#fff;border:none;padding:4px 12px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;flex-shrink:0}
-.bled{width:12px;height:12px;border-radius:50%;background:#fff;flex-shrink:0;animation:ledp .4s infinite alternate;box-shadow:0 0 8px #fff}
-@keyframes ledp{0%{box-shadow:0 0 4px #fff}100%{box-shadow:0 0 16px #fff}}
+.bsub{font-size:11px;color:#fecaca;margin-top:2px}
+.bsound{background:#1e293b;border:1px solid #475569;color:#e2e8f0;padding:5px 12px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;flex-shrink:0}
+.bsound.on{background:#16a34a;border-color:#16a34a;color:#fff}
 
-/* ══ LED BAR ══ */
-.led-bar{background:#0a0f1e;border-bottom:1px solid #1e293b;padding:5px 16px;display:flex;align-items:center;gap:14px;flex-shrink:0;height:34px}
+.topbar{background:#0f172a;border-bottom:1px solid #1e293b;padding:0 16px;height:50px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.brand{display:flex;align-items:center;gap:10px;font-size:15px;font-weight:700;color:#f1f5f9}
+.topbar-right{display:flex;align-items:center;gap:12px}
+.serial-status{display:flex;align-items:center;gap:6px;background:#1e293b;padding:4px 12px;border-radius:20px;font-size:12px}
+.sdot{width:8px;height:8px;border-radius:50%;background:#ef4444}
+.sdot.ok{background:#22c55e;animation:pulse 2s infinite}
+.live-pill{background:#16a34a;color:#fff;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:6px}
+.ldot{width:6px;height:6px;border-radius:50%;background:#fff;animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.iconbtn{background:#1e293b;border:1px solid #334155;color:#e2e8f0;border-radius:8px;padding:5px 10px;font-size:12px;cursor:pointer}
+.iconbtn:hover{background:#334155}
+
+/* ── LED ya hali (SALAMA/ONYO/HATARI) — inazima/kuwaka kiotomatiki ── */
+.led-bar{background:#0a0f1e;border-bottom:1px solid #1e293b;padding:6px 16px;display:flex;align-items:center;gap:14px;flex-shrink:0;height:36px}
 .led-item{display:flex;align-items:center;gap:6px}
-.led{width:16px;height:16px;border-radius:50%;flex-shrink:0;transition:all .3s}
+.led{width:14px;height:14px;border-radius:50%;flex-shrink:0;transition:all .3s}
 .led-off{background:#1e293b}
 .led-green{background:#22c55e;box-shadow:0 0 8px #22c55e}
-.led-amber{background:#f59e0b;box-shadow:0 0 8px #f59e0b;animation:bl 1s infinite}
-.led-red{background:#ef4444;box-shadow:0 0 10px #ef4444;animation:bl .4s infinite}
-@keyframes bl{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.2;transform:scale(.7)}}
-.llbl{font-size:10px;font-weight:700;color:#475569}
-.llbl.s{color:#4ade80}.llbl.w{color:#fbbf24}.llbl.d{color:#f87171}
+.led-red{background:#ef4444;box-shadow:0 0 10px #ef4444;animation:blr .5s infinite}
+@keyframes blr{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(.75)}}
+.llbl{font-size:11px;font-weight:700;color:#475569}
+.llbl.on-g{color:#4ade80}.llbl.on-r{color:#f87171}
 .ldiv{width:1px;height:18px;background:#1e293b}
-.bzrw{display:flex;align-items:center;gap:6px;margin-left:auto}
-.bzrl{font-size:10px;color:#64748b}
-.bzrb{background:#1e293b;border:1px solid #334155;color:#64748b;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer}
-.bzrb.on{background:#16a34a;border-color:#16a34a;color:#fff}
-.stxt{font-size:10px;color:#475569}
 
-/* ══ STATS BAR ══ */
 .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:#1e293b;flex-shrink:0}
-.stat{background:#0f172a;padding:7px 14px;position:relative}
-.stat-label{font-size:10px;color:#64748b;font-weight:600;text-transform:uppercase}
-.stat-val{font-size:20px;font-weight:700;margin-top:1px}
+.stat{background:#0f172a;padding:10px 16px}
+.stat-label{font-size:10px;color:#64748b;font-weight:600;text-transform:uppercase;letter-spacing:.05em}
+.stat-val{font-size:24px;font-weight:700;margin-top:2px}
+.stat-sub{font-size:10px;color:#475569;margin-top:1px}
 .c-blue{color:#60a5fa}.c-green{color:#4ade80}.c-red{color:#f87171}.c-amber{color:#fbbf24}
-/* Admin button inside stats */
-.admin-login-btn{
-  position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
-  background:#0f172a;cursor:pointer;border:none;width:100%;transition:.2s;
-}
-.admin-login-btn:hover{background:#1e293b}
-.admin-login-btn .abl{font-size:18px;margin-bottom:2px}
-.admin-login-btn .abt{font-size:10px;font-weight:700;color:#60a5fa}
-.admin-login-btn .abs{font-size:9px;color:#475569;margin-top:1px}
-.admin-logged-btn{
-  position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
-  background:#052e16;cursor:pointer;border:none;width:100%;transition:.2s;
-}
-.admin-logged-btn:hover{background:#064e3b}
-.admin-logged-btn .abl{font-size:16px;margin-bottom:2px}
-.admin-logged-btn .abt{font-size:10px;font-weight:700;color:#4ade80}
-.admin-logged-btn .abs{font-size:9px;color:#6ee7b7;margin-top:1px}
-
-/* ══ MAIN LAYOUT ══ */
-.main-layout{flex:1;display:grid;grid-template-columns:1fr 270px;overflow:hidden}
+.main{flex:1;display:grid;grid-template-columns:1fr 300px;overflow:hidden}
 #map{height:100%}
 .sidebar{background:#0f172a;border-left:1px solid #1e293b;display:flex;flex-direction:column;overflow:hidden}
-.sb-head{padding:7px 12px;border-bottom:1px solid #1e293b;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
-.sb-head h3{font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em}
-.badge{font-size:10px;font-weight:700;padding:2px 6px;border-radius:20px}
-.br{background:#450a0a;color:#f87171}.bg{background:#052e16;color:#4ade80}
-#alerts-list{overflow-y:auto;max-height:200px;flex-shrink:0}
-.alert-row{padding:6px 12px;border-bottom:1px solid #1e293b;display:flex;gap:7px}
-.ai{width:22px;height:22px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0}
+.sb-head{padding:10px 14px;border-bottom:1px solid #1e293b;display:flex;align-items:center;justify-content:space-between;background:#0f172a;flex-shrink:0}
+.sb-head h3{font-size:12px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em}
+.badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px}
+.br{background:#450a0a;color:#f87171}.bg{background:#052e16;color:#4ade80}.ba{background:#451a03;color:#fbbf24}
+#alerts{overflow-y:auto;max-height:240px;flex-shrink:0}
+.alert-row{padding:8px 14px;border-bottom:1px solid #1e293b;display:flex;gap:8px;align-items:flex-start}
+.ai{width:26px;height:26px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
 .ai-r{background:#450a0a}.ai-a{background:#451a03}.ai-g{background:#052e16}
 .at{font-size:11px;font-weight:600;color:#e2e8f0}
 .as{font-size:10px;color:#64748b;margin-top:1px}
-#boats-monitor{overflow-y:auto;flex:1}
-.boat-row{padding:8px 12px;border-bottom:1px solid #1e293b;display:flex;align-items:center;gap:8px;cursor:pointer}
+.divider{height:1px;background:#1e293b;flex-shrink:0}
+#boats-list{overflow-y:auto;flex:1}
+.boat-row{padding:10px 14px;border-bottom:1px solid #1e293b;display:flex;align-items:center;gap:10px;cursor:pointer;transition:background .15s}
+.boat-row:hover{background:#1e293b}
+.bdot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.bs{background:#22c55e}.bw{background:#f59e0b;animation:pulse 1s infinite}.bv{background:#ef4444;animation:pulse .6s infinite}
+.bi{flex:1}
+.bid{font-size:13px;font-weight:700;color:#f1f5f9}
+.bcoord{font-size:10px;color:#64748b;font-family:monospace;margin-top:1px}
+.bstat{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px}
+.bss{background:#052e16;color:#4ade80}.bsw{background:#451a03;color:#fbbf24}.bsv{background:#450a0a;color:#f87171}
+.no-data{padding:20px;text-align:center;color:#475569;font-size:12px}
+.packet-bar{background:#0f172a;border-top:1px solid #1e293b;padding:8px 14px;font-size:10px;color:#475569;display:flex;justify-content:space-between;flex-shrink:0}
+</style>
+</head>
+<body>
+
+<!-- ══ LOGIN ══ -->
+<div id="login-overlay">
+  <div class="login-card">
+    <h2>⚓ Mfumo wa Uvuvi</h2>
+    <div class="login-sub">Taarifa za boti na ukiukaji zinaonekana tu kwa admin aliyeingia</div>
+    <form id="login-form">
+      <div class="login-field">
+        <label>Jina la Mtumiaji</label>
+        <input type="text" id="login-user" autocomplete="username" required>
+      </div>
+      <div class="login-field">
+        <label>Password</label>
+        <input type="password" id="login-pass" autocomplete="current-password" required>
+      </div>
+      <button type="submit" class="login-btn">Ingia</button>
+      <div class="login-error" id="login-error"></div>
+    </form>
+  </div>
+</div>
+
+<!-- ══ APP ══ -->
+<div id="app-root">
+
+  <!-- Alarm banner: hai pekee ndani ya eneo lililokatazwa -->
+  <div id="alarm-banner">
+    <div class="bicon">🚨</div>
+    <div class="btext">
+      <div class="btitle" id="alarm-title">⛔ UKIUKAJI WA MPAKA!</div>
+      <div class="bsub" id="alarm-sub">—</div>
+    </div>
+    <button class="bsound" id="sound-btn" onclick="toggleSound()">🔇 Sauti: OFF</button>
+  </div>
+
+  <div class="topbar">
+    <div class="brand">⚓ Mfumo wa Udhibiti wa Uvuvi — Geofencing</div>
+    <div class="topbar-right">
+      <div class="serial-status">
+        <div class="sdot" id="sdot"></div>
+        <span id="slabel">Inasubiri COM15...</span>
+      </div>
+      <div class="live-pill"><div class="ldot"></div>LIVE</div>
+      <span style="font-size:12px;color:#64748b" id="clock"></span>
+      <button class="iconbtn" id="logout-btn">🚪 Toka</button>
+    </div>
+  </div>
+
+  <!-- LED ya hali — inawaka HATARI ndani ya eneo, inarudi SALAMA boti ikitoka -->
+  <div class="led-bar">
+    <span style="font-size:10px;color:#475569;font-weight:700">HALI YA SASA:</span>
+    <div class="led-item"><div class="led led-off" id="led-safe"></div><span class="llbl" id="lbl-safe">SALAMA</span></div>
+    <div class="ldiv"></div>
+    <div class="led-item"><div class="led led-off" id="led-danger"></div><span class="llbl" id="lbl-danger">HATARI</span></div>
+  </div>
+
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-label">Pakiti zilizopokelewa</div>
+      <div class="stat-val c-blue" id="s-packets">0</div>
+      <div class="stat-sub">Kutoka LoRa receiver</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Salama</div>
+      <div class="stat-val c-green" id="s-safe">0</div>
+      <div class="stat-sub">Nje ya mipaka</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Ukiukaji (sasa hivi)</div>
+      <div class="stat-val c-red" id="s-viol">0</div>
+      <div class="stat-sub">Ndani ya eneo sasa hivi</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Onyo</div>
+      <div class="stat-val c-amber" id="s-warn">0</div>
+      <div class="stat-sub">Inakaribia mpaka</div>
+    </div>
+  </div>
+
+  <div class="main">
+    <div id="map"></div>
+    <div class="sidebar">
+      <div class="sb-head">
+        <h3>🔔 Historia ya Ukiukaji (Log)</h3>
+        <span class="badge br" id="alert-badge">0</span>
+      </div>
+      <div id="alerts">
+        <div class="no-data">Inasubiri data kutoka Arduino...</div>
+      </div>
+      <div class="divider"></div>
+      <div class="sb-head">
+        <h3>🚤 Boti</h3>
+        <span class="badge bg" id="boat-count">0</span>
+      </div>
+      <div id="boats-list">
+        <div class="no-data">Hakuna boti zimegunduliwa bado...</div>
+      </div>
+      <div class="packet-bar">
+        <span>Pakiti: <strong id="pcount">0</strong></span>
+        <span id="last-packet">Mwisho: —</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════
+// AUTH — Kuingia kama Admin
+// Taarifa zote za boti/ukiukaji zinapatikana TU
+// baada ya kuingia kwa mafanikio (token sahihi).
+// ════════════════════════════════════════════════
+let AUTH_TOKEN = localStorage.getItem('uvuvi_admin_token') || null;
+
+function authHeaders(){ return AUTH_TOKEN ? { 'Authorization': 'Bearer ' + AUTH_TOKEN } : {}; }
+
+function showLogin(message){
+  AUTH_TOKEN = null;
+  localStorage.removeItem('uvuvi_admin_token');
+  document.getElementById('login-overlay').style.display = 'flex';
+  document.getElementById('app-root').style.display = 'none';
+  document.getElementById('login-error').textContent = message || '';
+  if (ws) { try { ws.close(); } catch(e){} }
+}
+
+function showApp(){
+  document.getElementById('login-overlay').style.display = 'none';
+  document.getElementById('app-root').style.display = 'flex';
+  loadInitialData();
+  connect();
+}
+
+document.getElementById('login-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const username = document.getElementById('login-user').value.trim();
+  const password = document.getElementById('login-pass').value;
+  const errEl = document.getElementById('login-error');
+  errEl.textContent = '';
+  try {
+    const r = await fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password })
+    });
+    const data = await r.json();
+    if (r.ok && data.token) {
+      AUTH_TOKEN = data.token;
+      localStorage.setItem('uvuvi_admin_token', AUTH_TOKEN);
+      showApp();
+    } else {
+      errEl.textContent = data.error || 'Imeshindikana kuingia';
+    }
+  } catch (err) {
+    errEl.textContent = 'Hitilafu ya mtandao, jaribu tena';
+  }
+});
+
+document.getElementById('logout-btn').addEventListener('click', async () => {
+  try { await fetch('/api/logout', { method: 'POST', headers: authHeaders() }); } catch(e){}
+  showLogin();
+});
+
+// ════════════════════════════════════════════════
+// ALARM — sauti (hiari ya mtumiaji, kuepuka block ya autoplay)
+// ════════════════════════════════════════════════
+let soundOn = false;
+let audioCtx = null;
+function toggleSound(){
+  soundOn = !soundOn;
+  const btn = document.getElementById('sound-btn');
+  btn.textContent = soundOn ? '🔊 Sauti: ON' : '🔇 Sauti: OFF';
+  btn.classList.toggle('on', soundOn);
+  if (soundOn && !audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+}
+function beep(){
+  if (!soundOn || !audioCtx) return;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.frequency.value = 880;
+  osc.type = 'square';
+  gain.gain.value = 0.08;
+  osc.connect(gain).connect(audioCtx.destination);
+  osc.start();
+  osc.stop(audioCtx.currentTime + 0.18);
+}
+let beepInterval = null;
+function setAlarm(active, message){
+  const banner = document.getElementById('alarm-banner');
+  if (active) {
+    banner.classList.add('active');
+    document.getElementById('alarm-sub').textContent = message || '';
+    if (!beepInterval) { beep(); beepInterval = setInterval(beep, 1000); }
+  } else {
+    banner.classList.remove('active');
+    if (beepInterval) { clearInterval(beepInterval); beepInterval = null; }
+  }
+}
+
+// ════════════════════════════════════════════════
+// Ramani
+// ════════════════════════════════════════════════
+const map = L.map('map').setView([-8.936, 33.423], 15);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '© OpenStreetMap', maxZoom: 19
+}).addTo(map);
+
+let zoneLayers = [];
+function drawZones(zones){
+  zoneLayers.forEach(l => map.removeLayer(l));
+  zoneLayers = [];
+  (zones || []).forEach(z => {
+    const b = z.bounds;
+    const rect = L.rectangle(
+      [[b.latMin, b.lonMin], [b.latMax, b.lonMax]],
+      { color: '#ef4444', weight: 2, dashArray: '6 4', fillColor: '#ef4444', fillOpacity: .15 }
+    ).addTo(map);
+    rect.bindTooltip(`🚫 ${z.name}`, { permanent: true, direction: 'center', className: 'zone-tip' });
+    zoneLayers.push(rect);
+  });
+}
+
+// ── State ──
+const boats = {};
+const boatMarkers = {};
+const alerts = [];
+let packets = 0;
+
+function makeIcon(status){
+  const c = status === 'violation' ? '#ef4444' : status === 'warning' ? '#f59e0b' : '#22c55e';
+  return L.divIcon({
+    className: '',
+    html: `<div style="width:30px;height:30px;border-radius:50%;background:${c};border:3px solid #fff;display:flex;align-items:center;justify-content:center;font-size:14px;box-shadow:0 0 0 2px ${c}">⚓</div>`,
+    iconSize: [30, 30], iconAnchor: [15, 15]
+  });
+}
+
+function updateBoat(boat){
+  boats[boat.id] = boat;
+  if (boatMarkers[boat.id]) {
+    boatMarkers[boat.id].setLatLng([boat.lat, boat.lon]);
+    boatMarkers[boat.id].setIcon(makeIcon(boat.status));
+  } else {
+    const m = L.marker([boat.lat, boat.lon], { icon: makeIcon(boat.status) }).addTo(map);
+    m.bindPopup('');
+    boatMarkers[boat.id] = m;
+    map.setView([boat.lat, boat.lon], 15);
+  }
+  boatMarkers[boat.id].getPopup().setContent(`
+    <div style="font-family:monospace;font-size:12px;line-height:1.6">
+    <b style="font-size:14px">${boat.id}</b><br>
+    Lat: <b>${boat.lat.toFixed(6)}</b><br>
+    Lon: <b>${boat.lon.toFixed(6)}</b><br>
+    Hali: <b style="color:${boat.status === 'violation' ? '#dc2626' : boat.status === 'warning' ? '#d97706' : '#16a34a'}">
+      ${boat.status === 'violation' ? '⛔ UKIUKAJI' : boat.status === 'warning' ? '⚠️ ONYO' : '✅ SALAMA'}
+    </b>
+    ${boat.zone ? `<br>📍 ${boat.zone}` : ''}
+    <br><small>${new Date(boat.time).toLocaleTimeString()}</small>
+    </div>
+  `);
+  packets = boat.packet || packets + 1;
+  renderAll();
+}
+
+// Log ya ukiukaji — INABAKI (haifutwi), ni historia ya kudumu kwa admin
+function addAlert(a){
+  alerts.unshift(a);
+  if (alerts.length > 200) alerts.pop();
+  renderAlerts();
+}
+
+function renderAll(){
+  const all = Object.values(boats);
+
+  // Hali ya SASA HIVI pekee — hii ndiyo inayoamua alarm/LED/badge.
+  // Boti ikitoka eneo lililokatazwa, violNow inarudi 0 KIOTOMATIKO,
+  // na alarm + LED nyekundu vinazima vyenyewe (huhitaji "Nimeona" la mkono).
+  const violNow = all.filter(b => b.status === 'violation').length;
+  const warnNow = all.filter(b => b.status === 'warning').length;
+  const safeNow = all.filter(b => b.status === 'safe').length;
+
+  document.getElementById('s-packets').textContent = packets;
+  document.getElementById('s-safe').textContent = safeNow;
+  document.getElementById('s-viol').textContent = violNow;
+  document.getElementById('s-warn').textContent = warnNow;
+  document.getElementById('boat-count').textContent = all.length;
+  document.getElementById('pcount').textContent = packets;
+  document.getElementById('last-packet').textContent = 'Mwisho: ' + new Date().toLocaleTimeString();
+
+  // Badge ya log — idadi ya jumla ya matukio ya ukiukaji kwenye historia (haizimi, ni rekodi)
+  document.getElementById('alert-badge').textContent = alerts.filter(a => a.level === 'danger').length;
+
+  // LED + Alarm — vinategemea hali ya SASA HIVI pekee
+  const ledSafe = document.getElementById('led-safe');
+  const ledDanger = document.getElementById('led-danger');
+  const lblSafe = document.getElementById('lbl-safe');
+  const lblDanger = document.getElementById('lbl-danger');
+
+  if (violNow > 0) {
+    ledDanger.className = 'led led-red';
+    lblDanger.className = 'llbl on-r';
+    ledSafe.className = 'led led-off';
+    lblSafe.className = 'llbl';
+    const violBoats = all.filter(b => b.status === 'violation').map(b => b.id).join(', ');
+    setAlarm(true, `Boti zilizo ndani ya eneo lililokatazwa SASA HIVI: ${violBoats}`);
+  } else {
+    ledDanger.className = 'led led-off';
+    lblDanger.className = 'llbl';
+    ledSafe.className = 'led led-green';
+    lblSafe.className = 'llbl on-g';
+    setAlarm(false);
+  }
+
+  const bl = document.getElementById('boats-list');
+  if (!all.length) { bl.innerHTML = '<div class="no-data">Inasubiri data...</div>'; return; }
+  bl.innerHTML = all.map(b => `
+    <div class="boat-row" onclick="focusBoat('${b.id}')">
+      <div class="bdot ${b.status === 'safe' ? 'bs' : b.status === 'warning' ? 'bw' : 'bv'}"></div>
+      <div class="bi">
+        <div class="bid">${b.id}</div>
+        <div class="bcoord">${b.lat.toFixed(5)}, ${b.lon.toFixed(5)}</div>
+      </div>
+      <span class="bstat ${b.status === 'safe' ? 'bss' : b.status === 'warning' ? 'bsw' : 'bsv'}">
+        ${b.status === 'safe' ? 'Salama' : b.status === 'warning' ? 'Onyo' : 'Ukiukaji'}
+      </span>
+    </div>
+  `).join('');
+}
+
+function renderAlerts(){
+  const el = document.getElementById('alerts');
+  if (!alerts.length) { el.innerHTML = '<div class="no-data">Hakuna arifa bado...</div>'; return; }
+  el.innerHTML = alerts.slice(0, 50).map(a => `
+    <div class="alert-row">
+      <div class="ai ${a.level === 'danger' ? 'ai-r' : a.level === 'warning' ? 'ai-a' : 'ai-g'}">
+        ${a.level === 'danger' ? '🚨' : a.level === 'warning' ? '⚠️' : '✅'}
+      </div>
+      <div>
+        <div class="at">${a.message}</div>
+        <div class="as">${new Date(a.time).toLocaleTimeString()}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function focusBoat(id){
+  const b = boats[id];
+  if (b && boatMarkers[id]) { map.setView([b.lat, b.lon], 16); boatMarkers[id].openPopup(); }
+}
+
+// ── Saa ──
+setInterval(() => {
+  document.getElementById('clock').textContent = new Date().toLocaleTimeString();
+}, 1000);
+
+// ════════════════════════════════ex;align-items:center;gap:8px;cursor:pointer}
 .boat-row:hover{background:#1e293b}
 .bdot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
 .bs{background:#22c55e}.bw{background:#f59e0b;animation:blink .8s infinite}.bv{background:#ef4444;animation:blink .4s infinite}
