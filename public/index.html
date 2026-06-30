@@ -461,4 +461,33 @@ function connect() {
     } catch (e) {}
   };
   ws.onclose = () => {
-    document.getElementById('sdot').classLi
+    document.getElementById('sdot').classList.remove('ok');
+    document.getElementById('slabel').textContent = 'Inaunganika tena...';
+    wsRetry = Math.min(wsRetry + 1, 10);
+    setTimeout(connect, wsRetry * 1000);
+  };
+  ws.onerror = () => ws.close();
+}
+
+function loadInitialData() {
+  fetch('/api/boats', { headers: authHeaders() })
+    .then(r => r.ok ? r.json() : [])
+    .then(data => (data || []).forEach(updateBoat))
+    .catch(() => {});
+
+  fetch('/api/alerts', { headers: authHeaders() })
+    .then(r => r.ok ? r.json() : [])
+    .then(data => (data || []).reverse().forEach(addAlert))
+    .catch(() => {});
+
+  fetch('/api/zones', { headers: authHeaders() })
+    .then(r => r.ok ? r.json() : [])
+    .then(drawZones)
+    .catch(() => {});
+}
+
+// ── Anzisha programu moja kwa moja, bila login ──
+showApp();
+</script>
+</body>
+</html>
