@@ -44,35 +44,69 @@ const registeredBoats = {};
 const OFFLINE_THRESHOLD_MS = 15000; // sekunde 15 bila data = "haisomi"
 
 // ── Maeneo Yaliyokatazwa ──
-// Kila eneo ni "point" + eneo dogo (radius) kuzunguka, kufanana na mantiki ya Arduino
-// (targetLat, targetLon, allowedError) kwenye sketch ya LoRa Receiver
+// Eneo linaweza kuwa aina mbili:
+//   1) "circle"  -> { type:'circle', lat, lon, allowedError }  (eneo dogo - kama mita chache)
+//   2) "box"     -> { type:'box', bounds:{latMin,latMax,lonMin,lonMax} } (eneo kubwa - km nyingi)
+// MAKADIRIO: kuratibu za "box" hapa chini ni makadirio ya jumla ya Hifadhi za Bahari
+// rasmi Tanzania. THIBITISHA/REKEBISHA kabla ya matumizi rasmi - tumia Google Maps
+// kupata kuratibu sahihi zaidi (ona maelekezo kwenye mazungumzo).
 const FORBIDDEN_ZONES = [
   {
     id: 'A',
-    name: 'Eneo A - Lililokatazwa',
+    name: 'Eneo A - Lililokatazwa (Mbeya - jaribio)',
+    type: 'circle',
     lat: -8.942112,
     lon: 33.416584,
-    allowedError: 0.001000 // takriban mita 9, sawa na Arduino
+    allowedError: 0.100000 // takriban mita 9, sawa na Arduino
+  },
+  {
+    id: 'MIMP',
+    name: 'Hifadhi ya Bahari ya Mafia (Mafia Island Marine Park)',
+    type: 'box',
+    bounds: { latMin: -8.05, latMax: -7.70, lonMin: 39.55, lonMax: 39.85 }
+  },
+  {
+    id: 'MBREMP',
+    name: 'Hifadhi ya Ghuba ya Mnazi (Mnazi Bay - Ruvuma Estuary)',
+    type: 'box',
+    bounds: { latMin: -10.55, latMax: -10.30, lonMin: 40.30, lonMax: 40.55 }
+  },
+  {
+    id: 'TACMP',
+    name: 'Hifadhi ya Bahari ya Tanga (Tanga Coelacanth Marine Park)',
+    type: 'box',
+    bounds: { latMin: -5.30, latMax: -5.00, lonMin: 38.95, lonMax: 39.20 }
   }
 ];
 
 // Eneo la "onyo" (warning) ni doa kubwa kidogo kuzunguka eneo lililokatazwa
-const WARNING_MARGIN = 0.0003; // takriban mita 33 za ziada
+const WARNING_MARGIN = 0.0003; // takriban mita 33 za ziada (kwa zone za 'circle')
+const WARNING_MARGIN_BOX = 0.01; // takriban km 1 ya ziada (kwa zone za 'box')
+
+function isInsideZone(zone, lat, lon, margin) {
+  if (zone.type === 'box') {
+    const b = zone.bounds;
+    const m = margin || 0;
+    return lat >= b.latMin - m && lat <= b.latMax + m && lon >= b.lonMin - m && lon <= b.lonMax + m;
+  }
+  // default: circle
+  const m = margin || 0;
+  const latDiff = Math.abs(lat - zone.lat);
+  const lonDiff = Math.abs(lon - zone.lon);
+  return latDiff < zone.allowedError + m && lonDiff < zone.allowedError + m;
+}
 
 function checkViolation(lat, lon) {
   for (const zone of FORBIDDEN_ZONES) {
-    const latDiff = Math.abs(lat - zone.lat);
-    const lonDiff = Math.abs(lon - zone.lon);
-    if (latDiff < zone.allowedError && lonDiff < zone.allowedError) return zone;
+    if (isInsideZone(zone, lat, lon, 0)) return zone;
   }
   return null;
 }
 
 function checkWarning(lat, lon) {
   for (const zone of FORBIDDEN_ZONES) {
-    const latDiff = Math.abs(lat - zone.lat);
-    const lonDiff = Math.abs(lon - zone.lon);
-    if (latDiff < zone.allowedError + WARNING_MARGIN && lonDiff < zone.allowedError + WARNING_MARGIN) return zone;
+    const margin = zone.type === 'box' ? WARNING_MARGIN_BOX : WARNING_MARGIN;
+    if (isInsideZone(zone, lat, lon, margin)) return zone;
   }
   return null;
 }
@@ -84,11 +118,14 @@ function processBoatData(boatId, lat, lon, rawStatus) {
   const status = (violation || arduinoViolation) ? 'violation' : warning ? 'warning' : 'safe';
 
   packetCount++;
+  const reg = registeredBoats[boatId];
   const record = {
     id: boatId, lat, lon, status,
     zone: violation?.name || warning?.name || (arduinoViolation ? 'Eneo Lililokatazwa' : null),
     time: new Date().toISOString(),
-    packet: packetCount
+    packet: packetCount,
+    name: reg?.name || boatId,
+    owner: reg?.owner || '—'
   };
 
   boats[boatId] = record;
@@ -132,7 +169,7 @@ app.post('/api/data', (req, res) => {
 
 // ── Usajili wa boti ──
 app.post('/api/boats/register', (req, res) => {
-  const { boat_id, name } = req.body;
+  const { boat_id, name, owner } = req.body;
   if (!boat_id || !boat_id.trim()) {
     return res.status(400).json({ error: 'Tuma boat_id' });
   }
@@ -140,12 +177,15 @@ app.post('/api/boats/register', (req, res) => {
   registeredBoats[id] = {
     id,
     name: (name && name.trim()) || id,
+    owner: (owner && owner.trim()) || '—',
     registeredAt: registeredBoats[id]?.registeredAt || new Date().toISOString()
   };
   // Tengeneza boti ionekane mara moja kwenye dashboard ikiwa "haisomi" mpaka ituma data
   if (!boats[id]) {
     boats[id] = { id, lat: null, lon: null, status: 'offline', zone: null, time: null, packet: 0 };
   }
+  boats[id].name = registeredBoats[id].name;
+  boats[id].owner = registeredBoats[id].owner;
   broadcast({ type: 'boat_update', boat: boats[id] });
   res.json({ ok: true, boat: registeredBoats[id] });
 });
