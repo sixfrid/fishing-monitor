@@ -277,14 +277,23 @@ function drawZones(zones) {
   zoneLayers.forEach(l => map.removeLayer(l));
   zoneLayers = [];
   zones.forEach(z => {
-    // allowedError ni degrees; tunabadilisha kuwa mita kwa radius ya duara (~111320m kwa degree 1 ya latitude)
-    const radiusMeters = z.allowedError * 111320;
-    const circle = L.circle([z.lat, z.lon], {
-      radius: radiusMeters,
-      color: '#ef4444', weight: 2, dashArray: '6 4', fillColor: '#ef4444', fillOpacity: .15
-    }).addTo(map);
-    circle.bindTooltip(`🚫 ${z.name}`, { permanent: true, direction: 'center', className: 'zone-tip' });
-    zoneLayers.push(circle);
+    let layer;
+    if (z.type === 'box') {
+      const b = z.bounds;
+      layer = L.rectangle(
+        [[b.latMin, b.lonMin], [b.latMax, b.lonMax]],
+        { color: '#ef4444', weight: 2, dashArray: '6 4', fillColor: '#ef4444', fillOpacity: .12 }
+      ).addTo(map);
+    } else {
+      // allowedError ni degrees; tunabadilisha kuwa mita kwa radius ya duara (~111320m kwa degree 1 ya latitude)
+      const radiusMeters = z.allowedError * 111320;
+      layer = L.circle([z.lat, z.lon], {
+        radius: radiusMeters,
+        color: '#ef4444', weight: 2, dashArray: '6 4', fillColor: '#ef4444', fillOpacity: .15
+      }).addTo(map);
+    }
+    layer.bindTooltip(`🚫 ${z.name}`, { direction: 'center', className: 'zone-tip' });
+    zoneLayers.push(layer);
   });
 }
 
