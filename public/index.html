@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="sw">
 <head>
@@ -177,7 +178,10 @@ function showApp() {
   document.getElementById('app-root').style.display = 'flex';
   loadInitialData();
   connect();
+  setTimeout(() => { if (window.map) map.invalidateSize(); }, 100);
 }
+
+window.addEventListener('resize', () => { if (window.map) map.invalidateSize(); });
 
 document.getElementById('logout-btn').addEventListener('click', async () => {
   location.reload();
@@ -205,6 +209,7 @@ document.getElementById('export-btn').addEventListener('click', async () => {
 // Ramani
 // ════════════════════════════════════════════════
 const map = L.map('map').setView([-8.936, 33.423], 15);
+window.map = map;
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   attribution: '© OpenStreetMap', maxZoom: 19
 }).addTo(map);
@@ -395,4 +400,3 @@ showApp();
 </script>
 </body>
 </html>
-Show quoted text
