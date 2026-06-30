@@ -29,10 +29,10 @@ function processLine(line) {
   line = line.trim();
   if (!line) return;
 
-  const latMatch = line.match(/LATITUDE\s*:\s*([-\d.]+)/i);
+  const latMatch = line.match(/LATITUDE\s*(?:RECEIVED)?\s*:\s*([-\d.]+)/i);
   if (latMatch) { buf.lat = parseFloat(latMatch[1]); return; }
 
-  const lonMatch = line.match(/LONGITUDE\s*:\s*([-\d.]+)/i);
+  const lonMatch = line.match(/LONGITUDE\s*(?:RECEIVED)?\s*:\s*([-\d.]+)/i);
   if (lonMatch) { buf.lon = parseFloat(lonMatch[1]); }
 
   if (/PROHIBITED|NEEDS HELP/i.test(line)) lastStatus = 'violation';
