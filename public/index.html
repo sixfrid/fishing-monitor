@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="sw">
 <head>
@@ -48,12 +49,12 @@ body{font-family:system-ui,sans-serif;background:#0f172a;color:#e2e8f0;height:10
 .boat-row{padding:10px 14px;border-bottom:1px solid #1e293b;display:flex;align-items:center;gap:10px;cursor:pointer;transition:background .15s}
 .boat-row:hover{background:#1e293b}
 .bdot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
-.bs{background:#22c55e}.bw{background:#f59e0b;animation:pulse 1s infinite}.bv{background:#ef4444;animation:pulse .6s infinite}
+.bs{background:#22c55e}.bw{background:#f59e0b;animation:pulse 1s infinite}.bv{background:#ef4444;animation:pulse .6s infinite}.b-off{background:#64748b}
 .bi{flex:1}
 .bid{font-size:13px;font-weight:700;color:#f1f5f9}
 .bcoord{font-size:10px;color:#64748b;font-family:monospace;margin-top:1px}
 .bstat{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px}
-.bss{background:#052e16;color:#4ade80}.bsw{background:#451a03;color:#fbbf24}.bsv{background:#450a0a;color:#f87171}
+.bss{background:#052e16;color:#4ade80}.bsw{background:#451a03;color:#fbbf24}.bsv{background:#450a0a;color:#f87171}.bso{background:#1e293b;color:#94a3b8}
 .no-data{padding:20px;text-align:center;color:#475569;font-size:12px}
 .packet-bar{background:#0f172a;border-top:1px solid #1e293b;padding:8px 14px;font-size:10px;color:#475569;display:flex;justify-content:space-between;flex-shrink:0}
 
@@ -144,7 +145,10 @@ body{font-family:system-ui,sans-serif;background:#0f172a;color:#e2e8f0;height:10
       <div class="divider"></div>
       <div class="sb-head">
         <h3>🚤 Boti</h3>
-        <span class="badge bg" id="boat-count">0</span>
+        <div class="sb-head-right">
+          <button class="iconbtn" id="register-open-btn">+ Sajili</button>
+          <span class="badge bg" id="boat-count">0</span>
+        </div>
       </div>
       <div id="boats-list">
         <div class="no-data">Hakuna boti zimegunduliwa bado...</div>
@@ -154,6 +158,26 @@ body{font-family:system-ui,sans-serif;background:#0f172a;color:#e2e8f0;height:10
         <span id="last-packet">Mwisho: —</span>
       </div>
     </div>
+  </div>
+</div>
+
+<div id="register-overlay" style="position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:1001">
+  <div class="login-card">
+    <h2>🚤 Sajili Boti Mpya</h2>
+    <div class="login-sub">Weka kitambulisho cha boti kabla haijaanza kutuma data. Boti isiyosajiliwa hairuhusiwi kuonekana.</div>
+    <form id="register-form">
+      <div class="login-field">
+        <label>Boat ID</label>
+        <input type="text" id="reg-boat-id" placeholder="mfano: BOAT-001" required>
+      </div>
+      <div class="login-field">
+        <label>Jina (hiari)</label>
+        <input type="text" id="reg-boat-name" placeholder="mfano: Mashua ya Juma">
+      </div>
+      <button type="submit" class="login-btn">Sajili</button>
+      <div class="login-error" id="register-error"></div>
+    </form>
+    <button class="iconbtn" id="register-cancel-btn" style="width:100%;margin-top:8px">Funga</button>
   </div>
 </div>
 
@@ -269,30 +293,67 @@ function makeIcon(status) {
   });
 }
 
+document.getElementById('register-open-btn').addEventListener('click', () => {
+  document.getElementById('register-overlay').style.display = 'flex';
+  document.getElementById('register-error').textContent = '';
+});
+document.getElementById('register-cancel-btn').addEventListener('click', () => {
+  document.getElementById('register-overlay').style.display = 'none';
+});
+document.getElementById('register-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const boat_id = document.getElementById('reg-boat-id').value.trim();
+  const name = document.getElementById('reg-boat-name').value.trim();
+  const errEl = document.getElementById('register-error');
+  errEl.textContent = '';
+  try {
+    const r = await fetch('/api/boats/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ boat_id, name })
+    });
+    const data = await r.json();
+    if (r.ok) {
+      document.getElementById('register-overlay').style.display = 'none';
+      document.getElementById('register-form').reset();
+    } else {
+      errEl.textContent = data.error || 'Imeshindikana kusajili boti';
+    }
+  } catch (err) {
+    errEl.textContent = 'Hitilafu ya mtandao, jaribu tena';
+  }
+});
+
 function updateBoat(boat) {
   boats[boat.id] = boat;
-  if (boatMarkers[boat.id]) {
-    boatMarkers[boat.id].setLatLng([boat.lat, boat.lon]);
-    boatMarkers[boat.id].setIcon(makeIcon(boat.status));
-  } else {
-    const m = L.marker([boat.lat, boat.lon], { icon: makeIcon(boat.status) }).addTo(map);
-    m.bindPopup('');
-    boatMarkers[boat.id] = m;
-    map.setView([boat.lat, boat.lon], 15);
+  if (boat.lat != null && boat.lon != null) {
+    if (boatMarkers[boat.id]) {
+      boatMarkers[boat.id].setLatLng([boat.lat, boat.lon]);
+      boatMarkers[boat.id].setIcon(makeIcon(boat.status));
+    } else {
+      const m = L.marker([boat.lat, boat.lon], { icon: makeIcon(boat.status) }).addTo(map);
+      m.bindPopup('');
+      boatMarkers[boat.id] = m;
+      map.setView([boat.lat, boat.lon], 15);
+    }
+    boatMarkers[boat.id].getPopup().setContent(`
+      <div style="font-family:monospace;font-size:12px;line-height:1.6">
+      <b style="font-size:14px">${boat.id}</b><br>
+      Lat: <b>${boat.lat.toFixed(6)}</b><br>
+      Lon: <b>${boat.lon.toFixed(6)}</b><br>
+      Hali: <b style="color:${boat.status === 'violation' ? '#dc2626' : boat.status === 'warning' ? '#d97706' : '#16a34a'}">
+        ${boat.status === 'violation' ? '⛔ UKIUKAJI' : boat.status === 'warning' ? '⚠️ ONYO' : '✅ SALAMA'}
+      </b>
+      ${boat.zone ? `<br>📍 ${boat.zone}` : ''}
+      <br><small>${new Date(boat.time).toLocaleTimeString()}</small>
+      </div>
+    `);
+  } else if (boatMarkers[boat.id]) {
+    // Boti haina kuratibu (haisomi) — ondoa alama yake kwenye ramani
+    map.removeLayer(boatMarkers[boat.id]);
+    delete boatMarkers[boat.id];
   }
-  boatMarkers[boat.id].getPopup().setContent(`
-    <div style="font-family:monospace;font-size:12px;line-height:1.6">
-    <b style="font-size:14px">${boat.id}</b><br>
-    Lat: <b>${boat.lat.toFixed(6)}</b><br>
-    Lon: <b>${boat.lon.toFixed(6)}</b><br>
-    Hali: <b style="color:${boat.status === 'violation' ? '#dc2626' : boat.status === 'warning' ? '#d97706' : '#16a34a'}">
-      ${boat.status === 'violation' ? '⛔ UKIUKAJI' : boat.status === 'warning' ? '⚠️ ONYO' : '✅ SALAMA'}
-    </b>
-    ${boat.zone ? `<br>📍 ${boat.zone}` : ''}
-    <br><small>${new Date(boat.time).toLocaleTimeString()}</small>
-    </div>
-  `);
-  packets = boat.packet || packets + 1;
+  packets = boat.packet != null ? boat.packet : packets;
   renderAll();
 }
 
@@ -322,19 +383,26 @@ function renderAll() {
   badge.className = 'badge ' + (violNow > 0 ? 'br' : 'bgrey');
 
   const bl = document.getElementById('boats-list');
-  if (!all.length) { bl.innerHTML = '<div class="no-data">Inasubiri data...</div>'; return; }
-  bl.innerHTML = all.map(b => `
+  if (!all.length) { bl.innerHTML = '<div class="no-data">Hakuna boti zilizosajiliwa bado...</div>'; return; }
+  bl.innerHTML = all.map(b => {
+    const isOffline = b.status === 'offline';
+    const dotClass = isOffline ? 'b-off' : (b.status === 'safe' ? 'bs' : b.status === 'warning' ? 'bw' : 'bv');
+    const statClass = isOffline ? 'bso' : (b.status === 'safe' ? 'bss' : b.status === 'warning' ? 'bsw' : 'bsv');
+    const statText = isOffline ? 'Haisomi' : (b.status === 'safe' ? 'Salama' : b.status === 'warning' ? 'Onyo' : 'Ukiukaji');
+    const coordText = (b.lat != null && b.lon != null)
+      ? `${b.lat.toFixed(5)}, ${b.lon.toFixed(5)}`
+      : '⚠️ Boti haisomi kwenye kompyuta';
+    return `
     <div class="boat-row" onclick="focusBoat('${b.id}')">
-      <div class="bdot ${b.status === 'safe' ? 'bs' : b.status === 'warning' ? 'bw' : 'bv'}"></div>
+      <div class="bdot ${dotClass}"></div>
       <div class="bi">
         <div class="bid">${b.id}</div>
-        <div class="bcoord">${b.lat.toFixed(5)}, ${b.lon.toFixed(5)}</div>
+        <div class="bcoord">${coordText}</div>
       </div>
-      <span class="bstat ${b.status === 'safe' ? 'bss' : b.status === 'warning' ? 'bsw' : 'bsv'}">
-        ${b.status === 'safe' ? 'Salama' : b.status === 'warning' ? 'Onyo' : 'Ukiukaji'}
-      </span>
+      <span class="bstat ${statClass}">${statText}</span>
     </div>
-  `).join('');
+  `;
+  }).join('');
 }
 
 function renderAlerts() {
@@ -393,33 +461,4 @@ function connect() {
     } catch (e) {}
   };
   ws.onclose = () => {
-    document.getElementById('sdot').classList.remove('ok');
-    document.getElementById('slabel').textContent = 'Inaunganika tena...';
-    wsRetry = Math.min(wsRetry + 1, 10);
-    setTimeout(connect, wsRetry * 1000);
-  };
-  ws.onerror = () => ws.close();
-}
-
-function loadInitialData() {
-  fetch('/api/boats', { headers: authHeaders() })
-    .then(r => r.ok ? r.json() : [])
-    .then(data => (data || []).forEach(updateBoat))
-    .catch(() => {});
-
-  fetch('/api/alerts', { headers: authHeaders() })
-    .then(r => r.ok ? r.json() : [])
-    .then(data => (data || []).reverse().forEach(addAlert))
-    .catch(() => {});
-
-  fetch('/api/zones', { headers: authHeaders() })
-    .then(r => r.ok ? r.json() : [])
-    .then(drawZones)
-    .catch(() => {});
-}
-
-// ── Anzisha programu moja kwa moja, bila login ──
-showApp();
-</script>
-</body>
-</html>
+    document.getElementById('sdot').classLi
