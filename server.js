@@ -55,8 +55,8 @@ const FORBIDDEN_ZONES = [
     id: 'A',
     name: 'Eneo A - Lililokatazwa (Mbeya - jaribio)',
     type: 'circle',
-    lat: -8.942112,
-    lon: 33.416584,
+    lat: -8.933890,
+    lon: 33.420703,
     allowedError: 0.001000 // takriban mita 9, sawa na Arduino
   },
   {
