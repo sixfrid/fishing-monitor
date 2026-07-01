@@ -57,7 +57,7 @@ const FORBIDDEN_ZONES = [
     type: 'circle',
     lat: -8.933890,
     lon: 33.420703,
-    allowedError: 0.001000 // takriban mita 9, sawa na Arduino
+    allowedError: 0.000084 // takriban mita 9, sawa na Arduino
   },
   {
     id: 'MIMP',
