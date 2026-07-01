@@ -19,6 +19,9 @@ async function sendToServer(lat, lon, status) {
     if (res.ok) {
       sentCount++;
       console.log(`✅ Imetumwa #${sentCount} | Lat:${lat} Lon:${lon} | ${status}`);
+    } else {
+      const body = await res.text().catch(() => '');
+      console.log(`⚠️  Server imekataa (HTTP ${res.status}): ${body}`);
     }
   } catch (err) {
     console.log(`❌ Haiwezi kutuma: ${err.message}`);
